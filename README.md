@@ -4,6 +4,14 @@ Ttrack app is an app for mobile devices that allows you to track your training. 
 
 ---
 
+## Architecture
+
+This project uses **Feature-First Clean Architecture**. All new features must be organized and implemented following this approach, ensuring clear separation of concerns, modularity, and scalability. Refer to the copilot-instructions.md for more details and guidelines.
+
+**Logic and UI will be shared by iOS and Android.**
+
+---
+
 ## Project Structure
 
 - **/composeApp/src/commonMain/kotlin**: Shared Kotlin code for all platforms (e.g., business logic, UI components).

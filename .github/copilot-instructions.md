@@ -14,6 +14,8 @@ This document provides guidelines and best practices for Copilot agents working 
 - Write concise, well-documented code and add KDoc/SwiftDoc where appropriate.
 - Always run and pass ktlint checks before committing code.
 - Use dependency injection and modularization where possible.
+- **Organize all new features using Feature-First Clean Architecture.**
+- **Logic and UI must be shared by iOS and Android.**
 - Prefer Compose best practices: stateless composables, unidirectional data flow, and separation of UI and logic.
 - For UI, use Jetpack Compose idioms (e.g., `@Composable` functions, state hoisting, theming).
 - For iOS, follow SwiftUI and KMP interoperability best practices.
@@ -42,8 +44,8 @@ This document provides guidelines and best practices for Copilot agents working 
 - If unsure about a change, prefer to ask for clarification or create a draft PR for discussion.
 - Always check for platform-specific nuances when editing shared code.
 - Do not generate Markdown files describing what the agent did (repeat for emphasis).
+- **All new features must follow Feature-First Clean Architecture.**
 
 ---
 
 > For more details, refer to the project README and official documentation for KMP and Jetpack Compose.
-
