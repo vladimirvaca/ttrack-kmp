@@ -1,0 +1,34 @@
+# Gradle
+.gradle
+build/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Local configuration
+local.properties
+
+# Log files
+*.log
+
+# Keystore
+*.jks
+
+# Mac
+.DS_Store
+
+# Java
+*.class
+
+# Caches
+.kotlin/
+.tmp/
+
+# Mobile
+/android/build/
+/android/app/build/
+/ios/build/
+/ios/Pods/
