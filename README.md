@@ -1,53 +1,59 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# Ttrack App
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-    folder is the appropriate location.
+Ttrack app is an app for mobile devices that allows you to track your training. It allows you to create training sessions or only track your exercise with a chronometer.
 
-* [/iosApp](./iosApp/iosApp) contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+---
 
-### Build and Run Android Application
+## Project Structure
 
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:assembleDebug
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:assembleDebug
-  ```
+- **/composeApp/src/commonMain/kotlin**: Shared Kotlin code for all platforms (e.g., business logic, UI components).
+  - Example files: `App.kt`, `Greeting.kt`, `Platform.kt`
+- **/composeApp/src/androidMain/kotlin**: Android-specific code (e.g., `MainActivity.kt`, `Platform.android.kt`).
+- **/composeApp/src/iosMain/kotlin**: iOS-specific code (e.g., `MainViewController.kt`, `Platform.ios.kt`).
+- **/composeApp/src/commonTest/kotlin**: Shared tests for multiplatform code.
+- **/iosApp/iosApp**: iOS SwiftUI entry point and resources (`ContentView.swift`, `Info.plist`, etc.).
 
-### Build and Run iOS Application
+---
 
-To build and run the development version of the iOS app, use the run configuration from the run widget
-in your IDE's toolbar or open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+## Build and Run
 
-### Code Quality
+### Android
+- Use the run configuration in your IDE (IntelliJ IDEA or Android Studio), or run from terminal:
+  - On macOS/Linux:
+    ```shell
+    ./gradlew :composeApp:assembleDebug
+    ```
+  - On Windows:
+    ```shell
+    .\gradlew.bat :composeApp:assembleDebug
+    ```
+
+### iOS
+- Use the run configuration in your IDE, or open the `/iosApp` directory in Xcode and run the project.
+
+---
+
+## Code Quality
 
 This project uses [ktlint](https://pinterest.github.io/ktlint/) for Kotlin code style checking.
 
-#### Git Hooks Setup
-
-To install the pre-commit hook that runs ktlint before each commit:
-
+### Git Hooks Setup
+A pre-commit hook is provided to run ktlint before each commit. To install it:
 ```shell
 ./gradlew installGitHooks
 ```
 
-
-#### Manual ktlint Commands
-
+### Manual ktlint Commands
 - **Check code style:** `./gradlew ktlintCheck`
 - **Auto-fix issues:** `./gradlew ktlintFormat`
 
 ---
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+## Development Environment
+- **Recommended IDEs:** [IntelliJ IDEA](https://www.jetbrains.com/idea/), [Android Studio](https://developer.android.com/studio), [Xcode](https://developer.apple.com/xcode/)
+- **Gradle Properties:** JVM and Android build settings are managed in `gradle.properties`.
+- **Multiplatform:** Shared logic goes in `commonMain`; platform-specific logic in `androidMain` or `iosMain`.
+
+---
+
+> **Developed with ❤️ by vladimirvaca 👽**
