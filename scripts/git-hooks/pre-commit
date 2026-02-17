@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# Git pre-commit hook to run ktlint check before committing.
+# This hook is installed automatically by running: ./gradlew installGitHooks
+#
+
+echo "Running ktlint check..."
+
+# Run ktlint check
+./gradlew ktlintCheck --daemon
+
+RESULT=$?
+
+if [ $RESULT -ne 0 ]; then
+    echo ""
+    echo "❌ ktlint check failed. Please fix the issues before committing."
+    echo "   You can run './gradlew ktlintFormat' to auto-fix some issues."
+    echo ""
+    exit 1
+fi
+
+echo "✅ ktlint check passed!"
+exit 0
+

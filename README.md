@@ -28,7 +28,25 @@ in your IDE’s toolbar or build it directly from the terminal:
 ### Build and Run iOS Application
 
 To build and run the development version of the iOS app, use the run configuration from the run widget
-in your IDE’s toolbar or open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+in your IDE's toolbar or open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+
+### Code Quality
+
+This project uses [ktlint](https://pinterest.github.io/ktlint/) for Kotlin code style checking.
+
+#### Git Hooks Setup
+
+To install the pre-commit hook that runs ktlint before each commit:
+
+```shell
+./gradlew installGitHooks
+```
+
+
+#### Manual ktlint Commands
+
+- **Check code style:** `./gradlew ktlintCheck`
+- **Auto-fix issues:** `./gradlew ktlintFormat`
 
 ---
 
