@@ -40,3 +40,15 @@ tasks.register<Copy>("installGitHooks") {
         println("✅ Git hooks installed successfully!")
     }
 }
+
+// Automatically install git hooks on every compile/run of the project
+gradle.projectsEvaluated {
+    val installGitHooks = tasks.named("installGitHooks")
+    subprojects {
+        tasks.matching { it.name.startsWith("compile") || it.name == "assemble" || it.name == "build" }
+            .configureEach {
+                dependsOn(installGitHooks)
+            }
+    }
+}
+
