@@ -20,5 +20,21 @@ if [ $RESULT -ne 0 ]; then
 fi
 
 echo "✅ ktlint check passed!"
+
+echo "Running unit tests..."
+
+# Run unit tests (compiles commonTest via the JVM target)
+./gradlew composeApp:testDebugUnitTest --daemon
+
+RESULT=$?
+
+if [ $RESULT -ne 0 ]; then
+    echo ""
+    echo "❌ Unit tests failed. Please fix the failing tests before committing."
+    echo ""
+    exit 1
+fi
+
+echo "✅ Unit tests passed!"
 exit 0
 
