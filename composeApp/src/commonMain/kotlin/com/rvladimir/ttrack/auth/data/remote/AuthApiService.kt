@@ -12,15 +12,16 @@ import io.ktor.http.contentType
 /**
  * Low-level HTTP service for authentication endpoints.
  *
+ * Endpoints are resolved from [AuthEndpoints] so that URL paths
+ * are defined in a single, dedicated place.
+ *
  * @property httpClient The configured Ktor [HttpClient].
- * @property baseUrl The base URL of the backend API (e.g. "https://api.ttrack.com").
  */
 class AuthApiService(
     private val httpClient: HttpClient,
-    private val baseUrl: String,
 ) {
     /**
-     * Calls the login endpoint.
+     * Calls the login endpoint ([AuthEndpoints.LOGIN]).
      *
      * @param email The user's email address.
      * @param password The user's password.
@@ -33,7 +34,7 @@ class AuthApiService(
         password: String,
     ): LoginResponseDto =
         httpClient
-            .post("$baseUrl/auth/login") {
+            .post(AuthEndpoints.LOGIN) {
                 contentType(ContentType.Application.Json)
                 setBody(LoginRequestDto(email = email, password = password))
             }.body()
