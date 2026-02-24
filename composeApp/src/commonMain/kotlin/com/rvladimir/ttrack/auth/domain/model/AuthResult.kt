@@ -3,10 +3,10 @@ package com.rvladimir.ttrack.auth.domain.model
 /**
  * Represents the result of a login operation.
  *
- * @property token The bearer token returned on success.
- * @property userId The authenticated user's identifier.
+ * @property accessToken The JWT access token returned on success.
+ * @property tokenType The token type (e.g. "Bearer").
  */
 data class AuthResult(
-    val token: String,
-    val userId: String,
+    val accessToken: String,
+    val tokenType: String? = null,
 )

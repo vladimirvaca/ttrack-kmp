@@ -10,9 +10,9 @@ data class LoginRequestDto(
     @SerialName("password") val password: String,
 )
 
-/** Response body received from the login endpoint. */
+/** Response body received from the mobile login endpoint. Matches `TokenResponseDTO` in the API spec. */
 @Serializable
 data class LoginResponseDto(
-    @SerialName("token") val token: String,
-    @SerialName("user_id") val userId: String,
+    @SerialName("accessToken") val accessToken: String,
+    @SerialName("tokenType") val tokenType: String,
 )

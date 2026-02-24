@@ -18,4 +18,17 @@ interface AuthRepository {
         email: String,
         password: String,
     ): Result<AuthResult>
+
+    /** Persists [token] so the session survives app restarts. */
+    fun saveToken(token: String)
+
+    /**
+     * Retrieves the currently stored session token.
+     *
+     * @return The token string, or `null` if the user is not logged in.
+     */
+    fun getToken(): String?
+
+    /** Removes the stored token, effectively logging the user out. */
+    fun clearToken()
 }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network security configuration.
+    Allows cleartext (HTTP) traffic to the dev backend host for debug/development purposes.
+    Remove or restrict this before a production release.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">44.199.248.244</domain>
+    </domain-config>
+</network-security-config>
+

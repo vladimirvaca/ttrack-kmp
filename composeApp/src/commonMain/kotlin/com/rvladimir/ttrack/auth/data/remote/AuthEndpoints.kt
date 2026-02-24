@@ -9,5 +9,5 @@ import com.rvladimir.ttrack.core.network.AppConfig
  * keeping endpoint definitions co-located and easy to maintain.
  */
 object AuthEndpoints {
-    val LOGIN = "${AppConfig.BASE_URL}/mobile-login"
+    val LOGIN = "${AppConfig.BASE_URL}/auth/mobile-login"
 }

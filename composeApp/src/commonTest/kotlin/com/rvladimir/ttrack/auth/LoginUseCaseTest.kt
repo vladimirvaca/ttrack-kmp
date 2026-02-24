@@ -15,7 +15,13 @@ class LoginUseCaseTest {
             override suspend fun login(
                 email: String,
                 password: String,
-            ): Result<AuthResult> = Result.success(AuthResult(token = "tok_123", userId = "user_42"))
+            ): Result<AuthResult> = Result.success(AuthResult(accessToken = "tok_123"))
+
+            override fun saveToken(token: String) = Unit
+
+            override fun getToken(): String? = null
+
+            override fun clearToken() = Unit
         }
 
     private val failingRepository =
@@ -24,6 +30,12 @@ class LoginUseCaseTest {
                 email: String,
                 password: String,
             ): Result<AuthResult> = Result.failure(RuntimeException("Invalid credentials"))
+
+            override fun saveToken(token: String) = Unit
+
+            override fun getToken(): String? = null
+
+            override fun clearToken() = Unit
         }
 
     @Test
@@ -32,7 +44,7 @@ class LoginUseCaseTest {
             val useCase = LoginUseCase(successRepository)
             val result = useCase("user@example.com", "password123")
             assertTrue(result.isSuccess)
-            assertEquals("tok_123", result.getOrNull()?.token)
+            assertEquals("tok_123", result.getOrNull()?.accessToken)
         }
 
     @Test

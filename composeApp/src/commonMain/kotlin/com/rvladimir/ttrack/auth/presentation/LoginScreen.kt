@@ -23,6 +23,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,11 +48,21 @@ import com.rvladimir.ttrack.ui.theme.TextGray
 
 @Composable
 @Preview
-fun LoginScreen(viewModel: LoginViewModel = viewModel { LoginViewModelFactory.create() }) {
+fun LoginScreen(
+    viewModel: LoginViewModel = viewModel { LoginViewModelFactory.create() },
+    onLoginSuccess: () -> Unit = {},
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val uiState by viewModel.uiState.collectAsState()
     val isLoading = uiState is LoginUiState.Loading
+
+    LaunchedEffect(uiState) {
+        if (uiState is LoginUiState.Success) {
+            onLoginSuccess()
+            viewModel.resetState()
+        }
+    }
 
     Column(
         modifier =

@@ -2,6 +2,7 @@ package com.rvladimir.ttrack.auth.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rvladimir.ttrack.auth.domain.repository.AuthRepository
 import com.rvladimir.ttrack.auth.domain.usecase.LoginUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
  */
 class LoginViewModel(
     private val loginUseCase: LoginUseCase,
+    private val repository: AuthRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
 
@@ -36,7 +38,8 @@ class LoginViewModel(
             _uiState.value = LoginUiState.Loading
             loginUseCase(email, password)
                 .onSuccess { result ->
-                    _uiState.value = LoginUiState.Success(userId = result.userId)
+                    repository.saveToken(result.accessToken)
+                    _uiState.value = LoginUiState.Success
                 }.onFailure { error ->
                     _uiState.value =
                         LoginUiState.Error(

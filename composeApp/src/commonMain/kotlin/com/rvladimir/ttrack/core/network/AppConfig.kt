@@ -6,5 +6,5 @@ package com.rvladimir.ttrack.core.network
  * Update [BASE_URL] to point to the actual backend before release.
  */
 object AppConfig {
-    const val BASE_URL = "http://http://44.199.248.244:8080/" // TODO: replace with your backend URL
+    const val BASE_URL = "http://44.199.248.244:8080"
 }
