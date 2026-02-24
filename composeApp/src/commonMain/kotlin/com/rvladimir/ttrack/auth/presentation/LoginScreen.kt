@@ -36,8 +36,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rvladimir.ttrack.core.isAndroid
 import com.rvladimir.ttrack.ui.theme.BrandGreen
 import com.rvladimir.ttrack.ui.theme.DarkBackground
+import com.rvladimir.ttrack.ui.theme.DeepCharcoal
 import com.rvladimir.ttrack.ui.theme.TextGray
 
 @Composable
@@ -171,7 +173,7 @@ fun LoginScreen() {
 
             Text(
                 text = "Forgot Password?",
-                color = BrandGreen,
+                color = DeepCharcoal,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 modifier =
@@ -198,6 +200,7 @@ fun LoginScreen() {
                 Text(
                     text = "LOG IN",
                     fontWeight = FontWeight.Bold,
+                    color = TextGray,
                     fontSize = 16.sp,
                 )
             }
@@ -212,7 +215,7 @@ fun LoginScreen() {
                 Text(
                     text = "OR CONTINUE WITH",
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    color = TextGray,
+                    color = DeepCharcoal,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -225,14 +228,19 @@ fun LoginScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                SocialButton(
-                    modifier = Modifier.weight(1f),
-                    text = "G", // Placeholder for Google
-                )
-                SocialButton(
-                    modifier = Modifier.weight(1f),
-                    text = "A", // Placeholder for Apple
-                )
+                if (isAndroid) {
+                    // Google sign-in — Android only
+                    SocialButton(
+                        modifier = Modifier.weight(1f),
+                        text = "GOOGLE",
+                    )
+                } else {
+                    // Apple sign-in — iOS only
+                    SocialButton(
+                        modifier = Modifier.weight(1f),
+                        text = "APPLE",
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))
