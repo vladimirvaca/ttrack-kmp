@@ -16,12 +16,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +38,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rvladimir.ttrack.core.isAndroid
 import com.rvladimir.ttrack.ui.theme.BrandGreen
 import com.rvladimir.ttrack.ui.theme.DarkBackground
@@ -44,9 +47,11 @@ import com.rvladimir.ttrack.ui.theme.TextGray
 
 @Composable
 @Preview
-fun LoginScreen() {
+fun LoginScreen(viewModel: LoginViewModel = viewModel { LoginViewModelFactory.create() }) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsState()
+    val isLoading = uiState is LoginUiState.Loading
 
     Column(
         modifier =
@@ -184,8 +189,18 @@ fun LoginScreen() {
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            if (uiState is LoginUiState.Error) {
+                Text(
+                    text = (uiState as LoginUiState.Error).message,
+                    color = Color.Red,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                )
+            }
+
             Button(
-                onClick = { /* TODO: Handle login */ },
+                onClick = { viewModel.login(email, password) },
+                enabled = !isLoading,
                 modifier =
                     Modifier
                         .fillMaxWidth()
@@ -197,12 +212,20 @@ fun LoginScreen() {
                         contentColor = Color.Black,
                     ),
             ) {
-                Text(
-                    text = "LOG IN",
-                    fontWeight = FontWeight.Bold,
-                    color = TextGray,
-                    fontSize = 16.sp,
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        color = Color.Black,
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Text(
+                        text = "LOG IN",
+                        fontWeight = FontWeight.Bold,
+                        color = TextGray,
+                        fontSize = 16.sp,
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
