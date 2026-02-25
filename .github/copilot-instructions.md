@@ -40,6 +40,15 @@ This document provides guidelines and best practices for Copilot agents working 
 
 ---
 
+## Backend API
+- The backend exposes a REST API described by an OpenAPI specification.
+- **Always refer to the OpenAPI spec when connecting to, retrieving, or saving data to the backend:** [ttrack-be-0.3.1.yml](http://44.199.248.244:8080/swagger/ttrack-be-0.3.1.yml)
+- Use the spec to generate or validate data models, endpoint paths, request/response structures, and error handling.
+- Ensure all API calls in the shared module (`commonMain`) conform to the contracts defined in the spec.
+- Do not hardcode endpoint URLs; use constants or configuration that can be updated per environment.
+
+---
+
 ## Additional Notes
 - If unsure about a change, prefer to ask for clarification or create a draft PR for discussion.
 - Always check for platform-specific nuances when editing shared code.
