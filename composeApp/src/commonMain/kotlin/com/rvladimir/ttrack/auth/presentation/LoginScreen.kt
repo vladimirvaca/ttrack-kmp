@@ -1,6 +1,7 @@
 package com.rvladimir.ttrack.auth.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,6 +60,7 @@ import com.rvladimir.ttrack.ui.theme.TextGray
 fun LoginScreen(
     viewModel: LoginViewModel = viewModel { LoginViewModelFactory.create() },
     onLoginSuccess: () -> Unit = {},
+    onNavigateToSignUp: () -> Unit = {},
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -314,6 +316,7 @@ fun LoginScreen(
                     text = "Create an account",
                     color = BrandGreen,
                     fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onNavigateToSignUp() },
                 )
             }
         }

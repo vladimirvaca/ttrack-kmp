@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import com.rvladimir.ttrack.auth.presentation.LoginScreen
 import com.rvladimir.ttrack.auth.presentation.LoginViewModelFactory
 import com.rvladimir.ttrack.dashboard.presentation.DashboardScreen
+import com.rvladimir.ttrack.registration.presentation.RegisterScreen
 
 /** Typed routes for the application navigation graph. */
 sealed class Screen(
@@ -18,6 +19,9 @@ sealed class Screen(
 
     /** Dashboard screen — shown after a successful login or on relaunch with an active session. */
     data object Dashboard : Screen("dashboard")
+
+    /** Create account screen. */
+    data object CreateAccount : Screen("create_account")
 }
 
 /**
@@ -51,6 +55,17 @@ fun AppNavGraph() {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
+                onNavigateToSignUp = {
+                    navController.navigate(Screen.CreateAccount.route)
+                },
+            )
+        }
+
+        composable(Screen.CreateAccount.route) {
+            RegisterScreen(
+                onRegistered = { navController.popBackStack() },
+                onBack = { navController.popBackStack() },
+                onLoginClick = { navController.popBackStack() },
             )
         }
 
