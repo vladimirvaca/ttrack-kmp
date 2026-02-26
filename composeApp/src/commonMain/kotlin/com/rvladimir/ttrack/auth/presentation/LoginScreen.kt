@@ -17,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,6 +28,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -218,11 +220,15 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             if (uiState is LoginUiState.Error) {
-                Text(
-                    text = (uiState as LoginUiState.Error).message,
-                    color = Color.Red,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(bottom = 12.dp),
+                AlertDialog(
+                    onDismissRequest = { viewModel.resetState() },
+                    title = { Text(text = "Login Failed") },
+                    text = { Text(text = (uiState as LoginUiState.Error).message) },
+                    confirmButton = {
+                        TextButton(onClick = { viewModel.resetState() }) {
+                            Text(text = "OK")
+                        }
+                    },
                 )
             }
 
