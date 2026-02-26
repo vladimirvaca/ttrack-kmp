@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
  * Follows unidirectional data flow: UI events → [login] → [uiState].
  *
  * @property loginUseCase The use case that performs the login operation.
+ * @property repository The auth repository, used to persist tokens and clear the session.
  */
 class LoginViewModel(
     private val loginUseCase: LoginUseCase,
@@ -26,6 +27,7 @@ class LoginViewModel(
 
     /**
      * Triggers a login request with the provided credentials.
+     * On success both the access token and the refresh token are persisted.
      *
      * @param email The user's email address.
      * @param password The user's password.
@@ -38,7 +40,10 @@ class LoginViewModel(
             _uiState.value = LoginUiState.Loading
             loginUseCase(email, password)
                 .onSuccess { result ->
-                    repository.saveToken(result.accessToken)
+                    repository.saveTokens(
+                        accessToken = result.accessToken,
+                        refreshToken = result.refreshToken,
+                    )
                     _uiState.value = LoginUiState.Success
                 }.onFailure { error ->
                     _uiState.value =
@@ -47,6 +52,12 @@ class LoginViewModel(
                         )
                 }
         }
+    }
+
+    /** Clears persisted tokens and resets UI state to [LoginUiState.Idle]. */
+    fun logout() {
+        repository.clearTokens()
+        _uiState.value = LoginUiState.Idle
     }
 
     /** Resets the state back to [LoginUiState.Idle] (e.g. after error is shown). */

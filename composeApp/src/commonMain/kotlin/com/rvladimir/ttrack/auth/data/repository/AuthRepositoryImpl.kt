@@ -10,7 +10,7 @@ import com.rvladimir.ttrack.core.session.SessionStorage
  * for network calls and [SessionStorage] for token persistence.
  *
  * @property apiService The remote API service.
- * @property sessionStorage Platform-specific storage for the session token.
+ * @property sessionStorage Platform-specific storage for session tokens.
  */
 class AuthRepositoryImpl(
     private val apiService: AuthApiService,
@@ -23,16 +23,30 @@ class AuthRepositoryImpl(
         runCatching {
             val dto = apiService.login(email, password)
             AuthResult(
-                accessToken =
-                    dto.accessToken
-                        ?: error("Login succeeded but no access token was returned."),
+                accessToken = dto.accessToken,
+                refreshToken = dto.refreshToken,
                 tokenType = dto.tokenType,
             )
         }
 
-    override fun saveToken(token: String) = sessionStorage.saveToken(token)
+    override suspend fun refreshToken(refreshToken: String): Result<AuthResult> =
+        runCatching {
+            val dto = apiService.refreshToken(refreshToken)
+            AuthResult(
+                accessToken = dto.accessToken,
+                refreshToken = dto.refreshToken,
+                tokenType = dto.tokenType,
+            )
+        }
 
-    override fun getToken(): String? = sessionStorage.getToken()
+    override fun saveTokens(
+        accessToken: String,
+        refreshToken: String,
+    ) = sessionStorage.saveTokens(accessToken, refreshToken)
 
-    override fun clearToken() = sessionStorage.clearToken()
+    override fun getAccessToken(): String? = sessionStorage.getAccessToken()
+
+    override fun getRefreshToken(): String? = sessionStorage.getRefreshToken()
+
+    override fun clearTokens() = sessionStorage.clearTokens()
 }

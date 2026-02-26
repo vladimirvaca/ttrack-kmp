@@ -16,12 +16,27 @@ import kotlinx.serialization.json.Json
 /**
  * Creates a shared, pre-configured [HttpClient].
  *
- * @param tokenProvider Optional lambda that returns the current JWT token.
- *   When provided, the `Authorization: Bearer <token>` header is automatically
- *   attached to every outgoing request via Ktor's [Auth] plugin.
- *   Pass `null` (the default) for unauthenticated clients such as the login call.
+ * ### Unauthenticated client
+ * Pass `null` for [tokenProvider] (the default). Used for the login endpoint itself.
+ *
+ * ### Authenticated client with automatic token refresh
+ * Supply both [tokenProvider] and [onRefreshTokens].
+ * - [tokenProvider] returns the current `accessToken` / `refreshToken` pair for outgoing requests.
+ * - [onRefreshTokens] is invoked by Ktor automatically when a **401** response is received.
+ *   It should call the `/auth/mobile-refresh` endpoint and return fresh [BearerTokens],
+ *   or `null` if the refresh itself fails (forcing the user to log in again).
+ *
+ * Token rotation is handled transparently: Ktor retries the original request with the new
+ * access token after a successful refresh, with no extra wiring required in the call sites.
+ *
+ * @param tokenProvider Lambda that returns the current [BearerTokens], or `null` when unauthenticated.
+ * @param onRefreshTokens Suspend lambda invoked on 401 to obtain fresh tokens; return `null` to signal
+ *   that the session is unrecoverable (user must log in again).
  */
-fun createKtorClient(tokenProvider: (() -> String?)? = null): HttpClient =
+fun createKtorClient(
+    tokenProvider: (suspend () -> BearerTokens?)? = null,
+    onRefreshTokens: (suspend () -> BearerTokens?)? = null,
+): HttpClient =
     createPlatformHttpClient {
         install(ContentNegotiation) {
             json(
@@ -39,12 +54,10 @@ fun createKtorClient(tokenProvider: (() -> String?)? = null): HttpClient =
         if (tokenProvider != null) {
             install(Auth) {
                 bearer {
-                    loadTokens {
-                        val token = tokenProvider() ?: return@loadTokens null
-                        BearerTokens(accessToken = token, refreshToken = "")
+                    loadTokens { tokenProvider() }
+                    refreshTokens {
+                        onRefreshTokens?.invoke()
                     }
-                    // No automatic refresh — token management is handled at the app level.
-                    refreshTokens { null }
                 }
             }
         }
