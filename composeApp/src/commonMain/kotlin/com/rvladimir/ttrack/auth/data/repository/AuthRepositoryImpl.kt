@@ -4,6 +4,8 @@ import com.rvladimir.ttrack.auth.data.remote.AuthApiService
 import com.rvladimir.ttrack.auth.domain.model.AuthResult
 import com.rvladimir.ttrack.auth.domain.repository.AuthRepository
 import com.rvladimir.ttrack.core.session.SessionStorage
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.http.HttpStatusCode
 
 /**
  * Concrete implementation of [AuthRepository] that delegates to [AuthApiService]
@@ -20,13 +22,23 @@ class AuthRepositoryImpl(
         email: String,
         password: String,
     ): Result<AuthResult> =
-        runCatching {
+        try {
             val dto = apiService.login(email, password)
-            AuthResult(
-                accessToken = dto.accessToken,
-                refreshToken = dto.refreshToken,
-                tokenType = dto.tokenType,
+            Result.success(
+                AuthResult(
+                    accessToken = dto.accessToken,
+                    refreshToken = dto.refreshToken,
+                    tokenType = dto.tokenType,
+                ),
             )
+        } catch (e: ClientRequestException) {
+            if (e.response.status == HttpStatusCode.Unauthorized) {
+                Result.failure(Exception("Invalid mail or password."))
+            } else {
+                Result.failure(e)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
 
     override suspend fun refreshToken(refreshToken: String): Result<AuthResult> =
