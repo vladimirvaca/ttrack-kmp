@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.rvladimir.ttrack.auth.presentation.LoginScreen
 import com.rvladimir.ttrack.auth.presentation.LoginViewModelFactory
+import com.rvladimir.ttrack.customsets.presentation.CustomSetsScreen
 import com.rvladimir.ttrack.dashboard.presentation.DashboardScreen
 import com.rvladimir.ttrack.registration.presentation.RegisterScreen
 
@@ -22,6 +23,9 @@ sealed class Screen(
 
     /** Create account screen. */
     data object CreateAccount : Screen("create_account")
+
+    /** Configure Routine / Timer screen. */
+    data object Timer : Screen("timer")
 }
 
 /**
@@ -72,6 +76,12 @@ fun AppNavGraph() {
         composable(Screen.Dashboard.route) {
             DashboardScreen(
                 onNavigate = { route -> navController.navigate(route) },
+            )
+        }
+
+        composable(Screen.Timer.route) {
+            CustomSetsScreen(
+                onBack = { navController.popBackStack() },
             )
         }
     }
