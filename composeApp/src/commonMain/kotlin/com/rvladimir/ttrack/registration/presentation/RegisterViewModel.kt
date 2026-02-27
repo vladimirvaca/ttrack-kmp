@@ -2,6 +2,7 @@ package com.rvladimir.ttrack.registration.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rvladimir.ttrack.registration.domain.usecase.RegisterUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,10 +12,11 @@ import kotlinx.coroutines.launch
  * ViewModel for the [RegisterScreen].
  * Follows unidirectional data flow: UI events → [register] → [uiState].
  *
- * Backend wiring is deferred — the use case will be injected once the
- * registration endpoint is connected.
+ * @property registerUseCase Use case that validates input and calls the backend.
  */
-class RegisterViewModel : ViewModel() {
+class RegisterViewModel(
+    private val registerUseCase: RegisterUseCase,
+) : ViewModel() {
     private val _uiState = MutableStateFlow<RegisterUiState>(RegisterUiState.Idle)
 
     /** Observable UI state consumed by [RegisterScreen]. */
@@ -25,7 +27,8 @@ class RegisterViewModel : ViewModel() {
      *
      * @param firstName The user's first name.
      * @param lastName The user's last name.
-     * @param nickname An optional display nickname.
+     * @param nickname The user's display nickname.
+     * @param dateBirth The user's date of birth in ISO-8601 format `"YYYY-MM-DD"`.
      * @param email The user's email address.
      * @param password The user's chosen password.
      */
@@ -33,17 +36,26 @@ class RegisterViewModel : ViewModel() {
         firstName: String,
         lastName: String,
         nickname: String,
+        dateBirth: String,
         email: String,
         password: String,
     ) {
-        if (firstName.isBlank() || lastName.isBlank() || email.isBlank() || password.isBlank()) {
-            _uiState.value = RegisterUiState.Error("Please fill in all required fields.")
-            return
-        }
         viewModelScope.launch {
             _uiState.value = RegisterUiState.Loading
-            // TODO: invoke RegisterUseCase once the backend is wired.
-            _uiState.value = RegisterUiState.Error("Registration not yet implemented.")
+            val result =
+                registerUseCase(
+                    firstName = firstName,
+                    lastName = lastName,
+                    nickname = nickname,
+                    dateBirth = dateBirth,
+                    email = email,
+                    password = password,
+                )
+            _uiState.value =
+                result.fold(
+                    onSuccess = { RegisterUiState.Success },
+                    onFailure = { RegisterUiState.Error(it.message ?: "An unexpected error occurred.") },
+                )
         }
     }
 

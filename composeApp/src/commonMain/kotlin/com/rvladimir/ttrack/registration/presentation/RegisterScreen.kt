@@ -22,12 +22,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AlternateEmail
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -40,8 +40,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -88,6 +90,7 @@ fun RegisterScreen(
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var nickname by remember { mutableStateOf("") }
+    var dateBirth by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -96,26 +99,37 @@ fun RegisterScreen(
     val uiState by viewModel.uiState.collectAsState()
     val isLoading = uiState is RegisterUiState.Loading
 
-    LaunchedEffect(uiState) {
-        if (uiState is RegisterUiState.Success) {
-            onRegistered()
-            viewModel.resetState()
-        }
-    }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    if (uiState is RegisterUiState.Error) {
-        AlertDialog(
-            onDismissRequest = { viewModel.resetState() },
-            confirmButton = {
-                TextButton(onClick = { viewModel.resetState() }) { Text("OK") }
-            },
-            title = { Text("Error") },
-            text = { Text((uiState as RegisterUiState.Error).message) },
-        )
+    LaunchedEffect(uiState) {
+        when (val state = uiState) {
+            is RegisterUiState.Success -> {
+                onRegistered()
+                viewModel.resetState()
+            }
+
+            is RegisterUiState.Error -> {
+                snackbarHostState.showSnackbar(message = state.message)
+                viewModel.resetState()
+            }
+
+            else -> {
+                // No action needed for Idle / Loading states
+            }
+        }
     }
 
     Scaffold(
         containerColor = Color(0xFFF8F9FA),
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = Color(0xFF323232),
+                    contentColor = Color.White,
+                )
+            }
+        },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -221,6 +235,17 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            RegisterFormFieldLabel("Date of Birth")
+            RegisterTextField(
+                value = dateBirth,
+                onValueChange = { dateBirth = it },
+                placeholder = "YYYY-MM-DD",
+                leadingIcon = Icons.Default.DateRange,
+                keyboardType = KeyboardType.Number,
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             RegisterFormFieldLabel("Email")
             RegisterTextField(
                 value = email,
@@ -273,6 +298,7 @@ fun RegisterScreen(
                         firstName = firstName,
                         lastName = lastName,
                         nickname = nickname,
+                        dateBirth = dateBirth,
                         email = email,
                         password = password,
                     )
