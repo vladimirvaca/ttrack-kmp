@@ -2,7 +2,6 @@ package com.rvladimir.ttrack.customsets.presentation
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,20 +13,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Loop
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Restore
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -40,22 +38,21 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,8 +66,6 @@ import com.rvladimir.ttrack.ui.theme.RestIcon
 import com.rvladimir.ttrack.ui.theme.TextGray
 import com.rvladimir.ttrack.ui.theme.WorkCardBg
 import com.rvladimir.ttrack.ui.theme.WorkIcon
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,10 +121,10 @@ fun CustomSetsScreen(onBack: () -> Unit = {}) {
 
             // Total Time Circle
             Box(
-                modifier = Modifier.size(220.dp),
+                modifier = Modifier.size(180.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Canvas(modifier = Modifier.size(200.dp)) {
+                Canvas(modifier = Modifier.size(160.dp)) {
                     drawArc(
                         color = LightGray.copy(alpha = 0.5f),
                         startAngle = 0f,
@@ -154,34 +149,10 @@ fun CustomSetsScreen(onBack: () -> Unit = {}) {
                     )
                     Text(
                         text = timeDisplay,
-                        fontSize = 44.sp,
+                        fontSize = 36.sp,
                         fontWeight = FontWeight.Bold,
                         color = DarkBackground,
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Box(
-                        modifier =
-                            Modifier
-                                .background(BrandGreen.copy(alpha = 0.1f), RoundedCornerShape(20.dp))
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Schedule,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = WorkIcon,
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "High Intensity",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = WorkIcon,
-                            )
-                        }
-                    }
                 }
             }
 
@@ -219,13 +190,12 @@ fun CustomSetsScreen(onBack: () -> Unit = {}) {
                 onValueChange = { restTime = (restTime + it).coerceAtLeast(0) },
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Rounds Section
-            RoundSection(
-                title = "Rounds",
-                selectedRounds = rounds,
-                onRoundsSelected = { rounds = it },
+            // Rounds Card
+            RoundsCard(
+                rounds = rounds,
+                onRoundsChange = { rounds = it },
             )
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -335,7 +305,7 @@ fun DurationCard(
                         modifier = Modifier.size(16.dp),
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(20.dp))
                 IconButton(
                     onClick = { onValueChange(5) },
                     modifier =
@@ -356,168 +326,116 @@ fun DurationCard(
 }
 
 @Composable
-fun RoundsSelector(
-    selectedRounds: Int,
-    onRoundsSelected: (Int) -> Unit,
+fun RoundsCard(
+    rounds: Int,
+    onRoundsChange: (Int) -> Unit,
 ) {
-    val options = (1..30).toList()
-    val itemWidth = 56.dp
-    val selectedIndex = options.indexOf(selectedRounds).coerceAtLeast(0)
-    val listState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
-    val density = LocalDensity.current
-    val itemWidthPx = with(density) { itemWidth.roundToPx() }
+    // Keep a local string so the user can freely type; commit on valid integer
+    var textValue by remember(rounds) { mutableStateOf(rounds.toString()) }
 
-    // Scroll so the selected item is centred in the viewport
-    fun centreOffset(viewportWidth: Int): Int = -(viewportWidth / 2 - itemWidthPx / 2)
-
-    LaunchedEffect(selectedIndex) {
-        val viewportWidth = listState.layoutInfo.viewportSize.width
-        // If layout not measured yet, wait one frame then scroll
-        if (viewportWidth == 0) {
-            snapshotFlow { listState.layoutInfo.viewportSize.width }
-                .distinctUntilChanged()
-                .collect { width ->
-                    if (width > 0) {
-                        listState.scrollToItem(
-                            index = selectedIndex,
-                            scrollOffset = centreOffset(width),
-                        )
-                    }
-                }
-        } else {
-            listState.scrollToItem(
-                index = selectedIndex,
-                scrollOffset = centreOffset(viewportWidth),
-            )
-        }
-    }
-
-    // Snap to nearest item when the user lifts their finger
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.isScrollInProgress }
-            .distinctUntilChanged()
-            .collect { scrolling ->
-                if (!scrolling) {
-                    val info = listState.layoutInfo
-                    val visibleInfo = info.visibleItemsInfo
-                    if (visibleInfo.isNotEmpty()) {
-                        val viewportWidth = info.viewportSize.width
-                        val viewportCenter = viewportWidth / 2
-                        val closest =
-                            visibleInfo.minByOrNull {
-                                kotlin.math.abs((it.offset + it.size / 2) - viewportCenter)
-                            }
-                        if (closest != null) {
-                            val snappedValue = options[closest.index]
-                            if (snappedValue != selectedRounds) {
-                                onRoundsSelected(snappedValue)
-                            }
-                            coroutineScope.launch {
-                                listState.animateScrollToItem(
-                                    index = closest.index,
-                                    scrollOffset = centreOffset(viewportWidth),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-    }
-
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .background(LightGray, RoundedCornerShape(16.dp)),
-        contentAlignment = Alignment.Center,
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = LightGray),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
-        LazyRow(
-            state = listState,
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(0.dp),
+        Row(
+            modifier =
+                Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            itemsIndexed(options) { _, option ->
-                val isSelected = option == selectedRounds
+            // Icon + label + editable value
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier =
                         Modifier
-                            .width(itemWidth)
-                            .height(64.dp)
-                            .clickable {
-                                onRoundsSelected(option)
-                                coroutineScope.launch {
-                                    val viewportWidth = listState.layoutInfo.viewportSize.width
-                                    listState.animateScrollToItem(
-                                        index = options.indexOf(option),
-                                        scrollOffset = centreOffset(viewportWidth),
-                                    )
-                                }
-                            },
+                            .size(48.dp)
+                            .background(Color.White, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (isSelected) {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(BrandGreen.copy(alpha = 0.15f), CircleShape),
-                        )
-                        Canvas(modifier = Modifier.size(44.dp)) {
-                            drawCircle(
-                                color = BrandGreen,
-                                radius = size.minDimension / 2,
-                                style = Stroke(width = 2.dp.toPx()),
-                            )
-                        }
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Loop,
+                        contentDescription = null,
+                        tint = BrandGreen,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
                     Text(
-                        text = "$option",
-                        fontSize = if (isSelected) 18.sp else 14.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color =
-                            when {
-                                isSelected -> DarkBackground
-                                kotlin.math.abs(option - selectedRounds) == 1 -> TextGray.copy(alpha = 0.7f)
-                                else -> TextGray.copy(alpha = 0.35f)
-                            },
+                        text = "Rounds",
+                        fontSize = 14.sp,
+                        color = TextGray,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    BasicTextField(
+                        value = textValue,
+                        onValueChange = { input ->
+                            // Allow only digit characters
+                            val filtered = input.filter { it.isDigit() }
+                            textValue = filtered
+                            val parsed = filtered.toIntOrNull()
+                            if (parsed != null && parsed >= 1) {
+                                onRoundsChange(parsed)
+                            }
+                        },
+                        textStyle =
+                            TextStyle(
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DarkBackground,
+                                textAlign = TextAlign.Start,
+                            ),
+                        cursorBrush = SolidColor(BrandGreen),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                    )
+                }
+            }
+
+            // − / + buttons
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = {
+                        val newVal = (rounds - 1).coerceAtLeast(1)
+                        onRoundsChange(newVal)
+                        textValue = newVal.toString()
+                    },
+                    modifier =
+                        Modifier
+                            .size(32.dp)
+                            .background(Color.White, CircleShape),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Remove,
+                        contentDescription = "Decrease rounds",
+                        tint = DarkBackground,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+                Spacer(modifier = Modifier.width(20.dp))
+                IconButton(
+                    onClick = {
+                        val newVal = rounds + 1
+                        onRoundsChange(newVal)
+                        textValue = newVal.toString()
+                    },
+                    modifier =
+                        Modifier
+                            .size(32.dp)
+                            .background(Color.White, CircleShape),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Increase rounds",
+                        tint = DarkBackground,
+                        modifier = Modifier.size(16.dp),
                     )
                 }
             }
         }
     }
-}
-
-@Composable
-fun RoundSection(
-    title: String,
-    selectedRounds: Int,
-    onRoundsSelected: (Int) -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = title,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = DarkBackground,
-        )
-        Text(
-            text = "$selectedRounds",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = BrandGreen,
-        )
-    }
-    Spacer(modifier = Modifier.height(12.dp))
-    RoundsSelector(
-        selectedRounds = selectedRounds,
-        onRoundsSelected = onRoundsSelected,
-    )
 }
