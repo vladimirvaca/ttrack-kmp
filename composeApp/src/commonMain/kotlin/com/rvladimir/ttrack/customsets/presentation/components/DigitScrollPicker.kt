@@ -91,7 +91,7 @@ fun DigitScrollPicker(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = digit.toString().padStart(2, '0'),
+                        text = digit.toString(),
                         fontSize = fontSize,
                         fontWeight = if (distance == 0) FontWeight.Bold else FontWeight.Normal,
                         color = if (distance == 0) DarkBackground else TextGray,

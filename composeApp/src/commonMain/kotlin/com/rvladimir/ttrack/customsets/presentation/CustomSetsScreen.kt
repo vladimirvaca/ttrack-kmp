@@ -66,9 +66,9 @@ private enum class DurationPicker { PREP, WORK, REST, NONE }
 @Preview
 fun CustomSetsScreen(onBack: () -> Unit = {}) {
     var prepTime by remember { mutableStateOf(10) }
-    var workTime by remember { mutableStateOf(45) }
-    var restTime by remember { mutableStateOf(15) }
-    var rounds by remember { mutableStateOf(8) }
+    var workTime by remember { mutableStateOf(60) }
+    var restTime by remember { mutableStateOf(30) }
+    var rounds by remember { mutableStateOf(6) }
 
     var activeDurationPicker by remember { mutableStateOf(DurationPicker.NONE) }
     var showRoundsPicker by remember { mutableStateOf(false) }
@@ -84,7 +84,7 @@ fun CustomSetsScreen(onBack: () -> Unit = {}) {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Configure Routine",
+                        text = "Configure Sets",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                     )
