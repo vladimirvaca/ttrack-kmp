@@ -64,7 +64,10 @@ private enum class DurationPicker { PREP, WORK, REST, NONE }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-fun CustomSetsScreen(onBack: () -> Unit = {}) {
+fun CustomSetsScreen(
+    onBack: () -> Unit = {},
+    onStartWorkout: (prepTime: Int, workTime: Int, restTime: Int, rounds: Int) -> Unit = { _, _, _, _ -> },
+) {
     var prepTime by remember { mutableStateOf(10) }
     var workTime by remember { mutableStateOf(60) }
     var restTime by remember { mutableStateOf(30) }
@@ -73,7 +76,7 @@ fun CustomSetsScreen(onBack: () -> Unit = {}) {
     var activeDurationPicker by remember { mutableStateOf(DurationPicker.NONE) }
     var showRoundsPicker by remember { mutableStateOf(false) }
 
-    val totalSeconds = prepTime + (workTime + restTime) * rounds
+    val totalSeconds = prepTime + workTime * rounds + restTime * (rounds - 1).coerceAtLeast(0)
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     val timeDisplay =
@@ -194,7 +197,7 @@ fun CustomSetsScreen(onBack: () -> Unit = {}) {
             Spacer(modifier = Modifier.height(40.dp))
 
             Button(
-                onClick = { /* Start workout */ },
+                onClick = { onStartWorkout(prepTime, workTime, restTime, rounds) },
                 modifier =
                     Modifier
                         .fillMaxWidth()

@@ -5,11 +5,14 @@ import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.rvladimir.ttrack.auth.presentation.LoginScreen
 import com.rvladimir.ttrack.auth.presentation.LoginViewModelFactory
 import com.rvladimir.ttrack.customsets.presentation.CustomSetsScreen
 import com.rvladimir.ttrack.dashboard.presentation.DashboardScreen
 import com.rvladimir.ttrack.registration.presentation.RegisterScreen
+import com.rvladimir.ttrack.workoutprogress.presentation.WorkoutProgressScreen
+import kotlinx.serialization.Serializable
 
 /** Typed routes for the application navigation graph. */
 sealed class Screen(
@@ -27,6 +30,22 @@ sealed class Screen(
     /** Configure Routine / Timer screen. */
     data object Timer : Screen("timer")
 }
+
+/**
+ * Type-safe route definition for the Workout Progress screen.
+ *
+ * @property prepTime Preparation duration in seconds.
+ * @property workTime Work interval duration in seconds.
+ * @property restTime Rest interval duration in seconds.
+ * @property rounds Number of work/rest cycles.
+ */
+@Serializable
+data class WorkoutProgressRoute(
+    val prepTime: Int,
+    val workTime: Int,
+    val restTime: Int,
+    val rounds: Int,
+)
 
 /**
  * Root navigation host that wires all top-level screens together.
@@ -82,6 +101,27 @@ fun AppNavGraph() {
         composable(Screen.Timer.route) {
             CustomSetsScreen(
                 onBack = { navController.popBackStack() },
+                onStartWorkout = { prepTime, workTime, restTime, rounds ->
+                    navController.navigate(
+                        WorkoutProgressRoute(
+                            prepTime = prepTime,
+                            workTime = workTime,
+                            restTime = restTime,
+                            rounds = rounds,
+                        ),
+                    )
+                },
+            )
+        }
+
+        composable<WorkoutProgressRoute> { backStackEntry ->
+            val route: WorkoutProgressRoute = backStackEntry.toRoute()
+            WorkoutProgressScreen(
+                prepTime = route.prepTime,
+                workTime = route.workTime,
+                restTime = route.restTime,
+                rounds = route.rounds,
+                onFinish = { navController.popBackStack() },
             )
         }
     }
