@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -38,6 +39,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.rvladimir.ttrack.core.BackHandler
 import com.rvladimir.ttrack.ui.theme.BrandGreen
 import com.rvladimir.ttrack.ui.theme.DarkBackground
 import com.rvladimir.ttrack.ui.theme.LightGray
@@ -81,6 +86,7 @@ fun WorkoutProgressScreen(
     restTime: Int,
     rounds: Int,
     onFinish: () -> Unit,
+    onNavigateToDashboard: () -> Unit,
 ) {
     val workoutViewModel =
         viewModel {
@@ -100,7 +106,12 @@ fun WorkoutProgressScreen(
             workoutViewModel.cancel()
             onFinish()
         },
+        onNavigateToDashboard = {
+            workoutViewModel.cancel()
+            onNavigateToDashboard()
+        },
         onSkip = { workoutViewModel.skip() },
+        onPause = { workoutViewModel.togglePause() },
     )
 }
 
@@ -112,8 +123,38 @@ private fun WorkoutProgressContent(
     uiState: WorkoutUiState,
     onTogglePause: () -> Unit,
     onCancel: () -> Unit,
+    onNavigateToDashboard: () -> Unit,
     onSkip: () -> Unit = {},
+    onPause: () -> Unit = {},
 ) {
+    var showCancelDialog by remember { mutableStateOf(false) }
+    // Track whether the session was already paused before the dialog appeared,
+    // so we only resume if the user hadn't paused manually beforehand.
+    var wasPausedBeforeDialog by remember { mutableStateOf(false) }
+
+    // Intercept system back button — show confirmation instead of navigating immediately
+    BackHandler(enabled = !uiState.isDone) {
+        if (!showCancelDialog) {
+            wasPausedBeforeDialog = uiState.isPaused
+            if (!uiState.isPaused) onPause()
+            showCancelDialog = true
+        }
+    }
+
+    if (showCancelDialog) {
+        CancelWorkoutDialog(
+            onConfirm = {
+                showCancelDialog = false
+                onNavigateToDashboard()
+            },
+            onDismiss = {
+                showCancelDialog = false
+                // Only resume if the timer was running before the dialog opened
+                if (!wasPausedBeforeDialog && uiState.isPaused) onPause()
+            },
+        )
+    }
+
     val phaseColor by animateColorAsState(
         targetValue = uiState.currentPhase.displayColor(),
         animationSpec = tween(durationMillis = 600),
@@ -159,14 +200,22 @@ private fun WorkoutProgressContent(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = "Ttrack Workout",
+                            text = "Custom Sets",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = DarkBackground,
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = onCancel) {
+                        IconButton(onClick = {
+                            if (uiState.isDone) {
+                                onNavigateToDashboard()
+                            } else if (!showCancelDialog) {
+                                wasPausedBeforeDialog = uiState.isPaused
+                                if (!uiState.isPaused) onPause()
+                                showCancelDialog = true
+                            }
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Cancel workout",
@@ -344,6 +393,70 @@ private fun WorkoutProgressContent(
 }
 
 // ─── Sub-composables ──────────────────────────────────────────────────────────
+
+/**
+ * Confirmation dialog shown when the user attempts to leave an active workout session.
+ *
+ * @param onConfirm Called when the user confirms they want to stop the workout.
+ * @param onDismiss Called when the user chooses to continue the workout.
+ */
+@Composable
+private fun CancelWorkoutDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        title = {
+            Text(
+                text = "Stop Training?",
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 18.sp,
+                color = DarkBackground,
+            )
+        },
+        text = {
+            Text(
+                text = "You're in the middle of your session. If you leave now, your progress won't be saved.",
+                fontSize = 14.sp,
+                color = TextGray,
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = DarkBackground,
+                        contentColor = Color.White,
+                    ),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text(
+                    text = "Stop Training",
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = onDismiss,
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = BrandGreen,
+                        contentColor = DarkBackground,
+                    ),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text(
+                    text = "Keep Going!",
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        },
+    )
+}
 
 /**
  * Linear progress bar at the top showing overall routine progress and round info.
@@ -644,6 +757,7 @@ fun WorkoutProgressScreenPreview() {
         restTime = 10,
         rounds = 3,
         onFinish = {},
+        onNavigateToDashboard = {},
     )
 }
 

@@ -122,6 +122,11 @@ fun AppNavGraph() {
                 restTime = route.restTime,
                 rounds = route.rounds,
                 onFinish = { navController.popBackStack() },
+                onNavigateToDashboard = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(Screen.Dashboard.route) { inclusive = false }
+                    }
+                },
             )
         }
     }
