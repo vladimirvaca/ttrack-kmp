@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rvladimir.ttrack.core.navigation.Screen
@@ -65,6 +66,7 @@ import com.rvladimir.ttrack.ui.theme.TextGreen
  * Dashboard screen — the app's main hub after a successful login.
  */
 @Composable
+@Preview
 fun DashboardScreen(onNavigate: (route: String) -> Unit = {}) {
     Scaffold(
         bottomBar = { DashboardBottomNavigation() },
@@ -358,7 +360,7 @@ private fun QuickStartSection(onNavigate: (String) -> Unit = {}) {
 
         // Custom Sets Card
         QuickStartCard(
-            title = "Custom Sets",
+            title = "Interval Training",
             subtitle = "Your sets, your pace",
             icon = Icons.Default.Watch,
             backgroundColor = Color.White,
