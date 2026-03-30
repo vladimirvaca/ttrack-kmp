@@ -51,12 +51,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.rvladimir.ttrack.core.navigation.Screen
+import com.rvladimir.ttrack.ui.theme.AvatarPeach
 import com.rvladimir.ttrack.ui.theme.BarChartGreen
 import com.rvladimir.ttrack.ui.theme.BrandGreen
 import com.rvladimir.ttrack.ui.theme.DarkBackground
 import com.rvladimir.ttrack.ui.theme.LightGray
 import com.rvladimir.ttrack.ui.theme.OffWhite
+import com.rvladimir.ttrack.ui.theme.OnlineGreen
 import com.rvladimir.ttrack.ui.theme.PurpleIcon
 import com.rvladimir.ttrack.ui.theme.PurpleIconBg
 import com.rvladimir.ttrack.ui.theme.TextGray
@@ -67,7 +68,7 @@ import com.rvladimir.ttrack.ui.theme.TextGreen
  */
 @Composable
 @Preview
-fun DashboardScreen(onNavigate: (route: String) -> Unit = {}) {
+fun DashboardScreen(onNavigateToTimer: () -> Unit = {}) {
     Scaffold(
         bottomBar = { DashboardBottomNavigation() },
         containerColor = OffWhite,
@@ -102,7 +103,7 @@ fun DashboardScreen(onNavigate: (route: String) -> Unit = {}) {
                 color = DarkBackground,
             )
             Spacer(modifier = Modifier.height(12.dp))
-            QuickStartSection(onNavigate = onNavigate)
+            QuickStartSection(onNavigateToTimer = onNavigateToTimer)
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -144,7 +145,7 @@ private fun HeaderSection() {
                     Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFFFDAB9)), // Peach color for avatar bg
+                        .background(AvatarPeach),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -162,7 +163,7 @@ private fun HeaderSection() {
                         .background(Color.White)
                         .padding(2.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF22C55E)), // Green status dot
+                        .background(OnlineGreen),
             )
         }
     }
@@ -341,7 +342,7 @@ private fun WorkoutStatItem(
 }
 
 @Composable
-private fun QuickStartSection(onNavigate: (String) -> Unit = {}) {
+private fun QuickStartSection(onNavigateToTimer: () -> Unit = {}) {
     Row(
         modifier = Modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -368,7 +369,7 @@ private fun QuickStartSection(onNavigate: (String) -> Unit = {}) {
             iconTint = PurpleIcon,
             textColor = DarkBackground,
             subtitleColor = TextGray,
-            onClick = { onNavigate(Screen.Timer.route) },
+            onClick = onNavigateToTimer,
         )
     }
 }
@@ -458,7 +459,7 @@ private fun WeeklyGoalCard() {
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     LinearProgressIndicator(
-                        progress = 0.6f,
+                        progress = { 0.6f },
                         modifier =
                             Modifier
                                 .fillMaxWidth()

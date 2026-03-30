@@ -4,6 +4,7 @@ import com.rvladimir.ttrack.auth.data.remote.AuthApiService
 import com.rvladimir.ttrack.auth.data.repository.AuthRepositoryImpl
 import com.rvladimir.ttrack.auth.domain.usecase.GetSessionUseCase
 import com.rvladimir.ttrack.auth.domain.usecase.LoginUseCase
+import com.rvladimir.ttrack.auth.domain.usecase.LogoutUseCase
 import com.rvladimir.ttrack.auth.domain.usecase.RefreshTokenUseCase
 import com.rvladimir.ttrack.core.network.createKtorClient
 import com.rvladimir.ttrack.core.session.SessionStorage
@@ -77,7 +78,7 @@ object LoginViewModelFactory {
     fun create(): LoginViewModel =
         LoginViewModel(
             loginUseCase = LoginUseCase(repository),
-            repository = repository,
+            logoutUseCase = LogoutUseCase(repository),
         )
 
     /** Returns a [GetSessionUseCase] backed by the shared repository instance. */

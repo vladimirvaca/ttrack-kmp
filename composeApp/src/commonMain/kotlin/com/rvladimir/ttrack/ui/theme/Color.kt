@@ -18,3 +18,12 @@ val PrepCardBg = Color(0xFFFFF7ED)
 val PrepIcon = Color(0xFFD97706)
 val WorkIcon = Color(0xFF10B981)
 val RestIcon = Color(0xFF3B82F6)
+
+// Form / input
+val InputBackground = Color(0xFFF9F9F9)
+val InputBorder = Color(0xFFE0E0E0)
+val FormBackground = Color(0xFFF8F9FA)
+
+// Dashboard
+val AvatarPeach = Color(0xFFFFDAB9)
+val OnlineGreen = Color(0xFF22C55E)

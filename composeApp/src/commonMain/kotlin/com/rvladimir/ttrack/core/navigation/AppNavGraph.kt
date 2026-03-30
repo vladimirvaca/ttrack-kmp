@@ -94,7 +94,7 @@ fun AppNavGraph() {
 
         composable(Screen.Dashboard.route) {
             DashboardScreen(
-                onNavigate = { route -> navController.navigate(route) },
+                onNavigateToTimer = { navController.navigate(Screen.Timer.route) },
             )
         }
 

@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rvladimir.ttrack.core.ui.extensions.toTimeString
 import com.rvladimir.ttrack.ui.theme.DarkBackground
 import com.rvladimir.ttrack.ui.theme.TextGray
 
@@ -38,9 +39,7 @@ fun DurationCard(
     iconColor: Color,
     onClick: () -> Unit,
 ) {
-    val minutesStr = (seconds / 60).toString().padStart(2, '0')
-    val secondsStr = (seconds % 60).toString().padStart(2, '0')
-    val displayTime = "$minutesStr:$secondsStr"
+    val displayTime = seconds.toTimeString()
 
     Card(
         modifier = Modifier.fillMaxWidth(),

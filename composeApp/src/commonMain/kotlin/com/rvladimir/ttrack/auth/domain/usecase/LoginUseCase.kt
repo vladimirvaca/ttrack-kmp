@@ -25,6 +25,13 @@ class LoginUseCase(
         if (email.isBlank() || password.isBlank()) {
             return Result.failure(IllegalArgumentException("Email and password must not be empty."))
         }
-        return repository.login(email.trim(), password)
+        val result = repository.login(email.trim(), password)
+        result.onSuccess { authResult ->
+            repository.saveTokens(
+                accessToken = authResult.accessToken,
+                refreshToken = authResult.refreshToken,
+            )
+        }
+        return result
     }
 }

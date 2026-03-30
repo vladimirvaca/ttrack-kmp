@@ -3,6 +3,7 @@ package com.rvladimir.ttrack.auth
 import com.rvladimir.ttrack.auth.domain.model.AuthResult
 import com.rvladimir.ttrack.auth.domain.repository.AuthRepository
 import com.rvladimir.ttrack.auth.domain.usecase.LoginUseCase
+import com.rvladimir.ttrack.auth.domain.usecase.LogoutUseCase
 import com.rvladimir.ttrack.auth.presentation.LoginUiState
 import com.rvladimir.ttrack.auth.presentation.LoginViewModel
 import kotlinx.coroutines.CompletableDeferred
@@ -105,7 +106,8 @@ class LoginViewModelTest {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private fun viewModelWith(repository: AuthRepository) = LoginViewModel(LoginUseCase(repository), repository)
+    private fun viewModelWith(repository: AuthRepository) =
+        LoginViewModel(LoginUseCase(repository), LogoutUseCase(repository))
 
     private fun LoginViewModel.loginValid() = login("user@example.com", "password123")
 

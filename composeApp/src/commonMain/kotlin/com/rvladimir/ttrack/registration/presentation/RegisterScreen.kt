@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -26,8 +25,6 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -37,8 +34,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -55,17 +50,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.rvladimir.ttrack.core.ui.components.TTrackFormLabel
+import com.rvladimir.ttrack.core.ui.components.TTrackTextField
 import com.rvladimir.ttrack.ui.theme.BrandGreen
+import com.rvladimir.ttrack.ui.theme.DarkBackground
+import com.rvladimir.ttrack.ui.theme.FormBackground
+import com.rvladimir.ttrack.ui.theme.TextGray
 
 /**
  * Screen that lets a new user register an account.
@@ -120,7 +117,7 @@ fun RegisterScreen(
     }
 
     Scaffold(
-        containerColor = Color(0xFFF8F9FA),
+        containerColor = FormBackground,
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
                 Snackbar(
@@ -144,14 +141,11 @@ fun RegisterScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Navigate back",
-                            tint = Color.Black,
+                            tint = DarkBackground,
                         )
                     }
                 },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFFF8F9FA),
-                    ),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = FormBackground),
             )
         },
     ) { innerPadding ->
@@ -188,12 +182,12 @@ fun RegisterScreen(
                 text = "Get Moving with Ttrack",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black,
+                color = DarkBackground,
             )
             Text(
                 text = "Create your profile to start tracking your daily fitness routines.",
                 fontSize = 14.sp,
-                color = Color.Gray,
+                color = TextGray,
                 modifier = Modifier.padding(top = 8.dp),
                 textAlign = TextAlign.Center,
             )
@@ -206,16 +200,16 @@ fun RegisterScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    RegisterFormFieldLabel("First Name")
-                    RegisterTextField(
+                    TTrackFormLabel("First Name")
+                    TTrackTextField(
                         value = firstName,
                         onValueChange = { firstName = it },
                         placeholder = "Jane",
                     )
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    RegisterFormFieldLabel("Last Name")
-                    RegisterTextField(
+                    TTrackFormLabel("Last Name")
+                    TTrackTextField(
                         value = lastName,
                         onValueChange = { lastName = it },
                         placeholder = "Doe",
@@ -225,8 +219,8 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            RegisterFormFieldLabel("Nickname")
-            RegisterTextField(
+            TTrackFormLabel("Nickname")
+            TTrackTextField(
                 value = nickname,
                 onValueChange = { nickname = it },
                 placeholder = "J-Doe",
@@ -235,8 +229,8 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            RegisterFormFieldLabel("Date of Birth")
-            RegisterTextField(
+            TTrackFormLabel("Date of Birth")
+            TTrackTextField(
                 value = dateBirth,
                 onValueChange = { dateBirth = it },
                 placeholder = "YYYY-MM-DD",
@@ -246,8 +240,8 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            RegisterFormFieldLabel("Email")
-            RegisterTextField(
+            TTrackFormLabel("Email")
+            TTrackTextField(
                 value = email,
                 onValueChange = { email = it },
                 placeholder = "jane@example.com",
@@ -257,8 +251,8 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            RegisterFormFieldLabel("Password")
-            RegisterTextField(
+            TTrackFormLabel("Password")
+            TTrackTextField(
                 value = password,
                 onValueChange = { password = it },
                 placeholder = "Min. 8 characters",
@@ -284,7 +278,7 @@ fun RegisterScreen(
                 Text(
                     text = "I agree to the Terms of Service and Privacy Policy.",
                     fontSize = 12.sp,
-                    color = Color.Gray,
+                    color = TextGray,
                     lineHeight = 16.sp,
                 )
             }
@@ -313,7 +307,7 @@ fun RegisterScreen(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        color = Color.Black,
+                        color = DarkBackground,
                         modifier = Modifier.size(24.dp),
                         strokeWidth = 2.dp,
                     )
@@ -321,7 +315,7 @@ fun RegisterScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = "Sign Up",
-                            color = Color.Black,
+                            color = DarkBackground,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                         )
@@ -329,7 +323,7 @@ fun RegisterScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
-                            tint = Color.Black,
+                            tint = DarkBackground,
                         )
                     }
                 }
@@ -345,7 +339,7 @@ fun RegisterScreen(
                 Text(
                     text = "Already have an account? ",
                     fontSize = 14.sp,
-                    color = Color.Gray,
+                    color = TextGray,
                 )
                 Text(
                     text = "Log In",
@@ -357,92 +351,4 @@ fun RegisterScreen(
             }
         } // end Column
     } // end Scaffold
-}
-
-// ─── Local UI components ──────────────────────────────────────────────────────
-
-/**
- * A label above a form field, aligned to the start.
- */
-@Composable
-fun RegisterFormFieldLabel(label: String) {
-    Text(
-        text = label,
-        fontWeight = FontWeight.Bold,
-        fontSize = 14.sp,
-        color = Color.Black,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-        textAlign = TextAlign.Start,
-    )
-}
-
-/**
- * A styled [OutlinedTextField] used throughout the Register form.
- */
-@Composable
-fun RegisterTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    leadingIcon: ImageVector? = null,
-    isPassword: Boolean = false,
-    passwordVisible: Boolean = false,
-    onPasswordToggle: () -> Unit = {},
-    keyboardType: KeyboardType = KeyboardType.Text,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
-        placeholder = { Text(placeholder, color = Color.LightGray) },
-        leadingIcon =
-            leadingIcon?.let {
-                {
-                    Icon(
-                        imageVector = it,
-                        contentDescription = null,
-                        tint = BrandGreen,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            },
-        trailingIcon =
-            if (isPassword) {
-                {
-                    IconButton(onClick = onPasswordToggle) {
-                        Icon(
-                            imageVector =
-                                if (passwordVisible) {
-                                    Icons.Default.VisibilityOff
-                                } else {
-                                    Icons.Default.Visibility
-                                },
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                            tint = Color.Gray,
-                        )
-                    }
-                }
-            } else {
-                null
-            },
-        visualTransformation =
-            if (isPassword && !passwordVisible) {
-                PasswordVisualTransformation()
-            } else {
-                VisualTransformation.None
-            },
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        shape = RoundedCornerShape(12.dp),
-        colors =
-            OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = Color.White,
-                focusedContainerColor = Color.White,
-                unfocusedBorderColor = Color(0xFFE0E0E0),
-                focusedBorderColor = BrandGreen,
-            ),
-        singleLine = true,
-    )
 }

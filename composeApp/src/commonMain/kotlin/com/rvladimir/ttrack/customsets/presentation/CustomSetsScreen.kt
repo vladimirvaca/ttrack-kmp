@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rvladimir.ttrack.core.ui.extensions.toTimeString
 import com.rvladimir.ttrack.customsets.presentation.components.DurationCard
 import com.rvladimir.ttrack.customsets.presentation.components.DurationPickerBottomSheet
 import com.rvladimir.ttrack.customsets.presentation.components.RoundsCard
@@ -77,10 +78,7 @@ fun CustomSetsScreen(
     var showRoundsPicker by remember { mutableStateOf(false) }
 
     val totalSeconds = prepTime + workTime * rounds + restTime * (rounds - 1).coerceAtLeast(0)
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    val timeDisplay =
-        "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+    val timeDisplay = totalSeconds.toTimeString()
 
     Scaffold(
         topBar = {
