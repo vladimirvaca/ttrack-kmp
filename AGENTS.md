@@ -21,8 +21,10 @@ composeApp/src/
     auth/                      # full feature — login + token refresh
     registration/              # full feature — account creation
     dashboard/                 # presentation-only (no data/domain yet)
-    workoutprogress/           # domain + presentation (timer state machine)
-    customsets/                # presentation-only
+    workoutprogress/           # domain/model + presentation (timer state machine; no factory — ViewModel takes constructor params)
+    customsets/                # presentation-only; Screen.Timer route maps here
+      presentation/
+        components/            # DigitScrollPicker, DurationCard, DurationPickerBottomSheet, RoundsCard, RoundsPickerBottomSheet
   androidMain/  # actual implementations + MainActivity
   iosMain/      # actual implementations + MainViewController
   commonTest/   # all unit tests live here
@@ -65,6 +67,15 @@ If a feature has no backend calls (e.g. `dashboard`, `customsets`), omit `data/`
 - Parameterised routes: `@Serializable data class <Name>Route(val param: Type)` passed to `navController.navigate(route)`.
 - Start destination is resolved at first composition by calling `GetSessionUseCase` — no token means `Screen.Login`, token present means `Screen.Dashboard`.
 
+**Current routes in `AppNavGraph.kt`:**
+| Route | Destination |
+|---|---|
+| `Screen.Login` | `LoginScreen` |
+| `Screen.Dashboard` | `DashboardScreen` |
+| `Screen.CreateAccount` | `RegisterScreen` |
+| `Screen.Timer` | `CustomSetsScreen` (interval trainer configurator) |
+| `WorkoutProgressRoute(prepTime, workTime, restTime, rounds)` | `WorkoutProgressScreen` (typed, `@Serializable`) |
+
 ### UiState
 ```kotlin
 sealed interface LoginUiState {
@@ -79,12 +90,15 @@ ViewModels expose `StateFlow<XxxUiState>` via `asStateFlow()`.
 ### Manual DI (no Koin/Hilt yet)
 Each feature has an `object <Feature>ViewModelFactory` that wires dependencies with `by lazy`. The single authenticated Ktor client is `LoginViewModelFactory.authenticatedClient` — **all features requiring auth must share this instance**.
 
+**Exception — `workoutprogress`:** `WorkoutProgressViewModel` has no factory. It takes constructor params (`prepTime`, `workTime`, `restTime`, `rounds`) and is instantiated directly in the screen via `viewModel { WorkoutProgressViewModel(...) }`. This is correct because it has no repository dependencies — the timer state machine is pure computation. The `WorkoutUiState` data class and `WorkoutPhase` enum also live in `domain/model/WorkoutState.kt` rather than in `presentation/` as there is no separate UiState file for this feature.
+
 ### Network
 - Base URL: `AppConfig.BASE_URL = "http://44.199.248.244:8080"` — change here only.
 - Endpoint paths: defined in `<Feature>Endpoints` objects, not inline strings.
 - Unauthenticated client: `createKtorClient()` — for login/register/public endpoints.
 - Authenticated client: `LoginViewModelFactory.authenticatedClient` — auto-attaches Bearer token, silently refreshes on 401.
 - Always consult the OpenAPI spec before adding/modifying endpoints: `http://44.199.248.244:8080/swagger/ttrack-be-0.3.1.yml`
+- **API service interfaces:** When a feature's API service needs to be faked in tests, extract an interface (e.g. `UserApiServiceInterface` in `registration/data/remote/`). The concrete class implements it; tests create anonymous object implementations. `AuthApiService` predates this pattern and has no interface.
 
 ### expect/actual Implementations
 | `expect` declaration | Android actual | iOS actual |
@@ -97,7 +111,21 @@ Each feature has an `object <Feature>ViewModelFactory` that wires dependencies w
 Android `SessionStorage` requires `AppContextHolder.appContext` — this is injected in `MainActivity.onCreate` before `setContent`.
 
 ### Theme & Colors
-All colors are named constants in `ui/theme/Color.kt` (e.g., `BrandGreen`, `DarkBackground`, `TextGray`). Never use raw hex literals in screens — always reference these constants. Wrap all screens in `TTrackTheme`.
+All colors are named constants in `ui/theme/Color.kt`. Never use raw hex literals in screens — always reference these constants. Wrap all screens in `TTrackTheme`.
+
+| Constant | Usage |
+|---|---|
+| `BrandGreen` | Primary accent, buttons, highlights |
+| `DarkBackground` | Dark surfaces, primary text on light bg |
+| `TextGray` | Secondary/muted text |
+| `LightGray` | Track/divider backgrounds |
+| `OffWhite` | Screen/scaffold backgrounds |
+| `DeepCharcoal` | Alternative dark surface |
+| `PurpleIcon` / `PurpleIconBg` | Secondary action icon + its container |
+| `BarChartGreen` | Chart/progress bar fill |
+| `TextGreen` | Positive/date text |
+| `WorkCardBg` / `RestCardBg` / `PrepCardBg` | Phase-specific card backgrounds (workoutprogress) |
+| `PrepIcon` / `WorkIcon` / `RestIcon` | Phase-specific icon tints (workoutprogress) |
 
 ---
 
@@ -154,6 +182,8 @@ class LoginViewModelTest {
 | Ktor | 3.1.3 |
 | Navigation Compose | 2.9.2 |
 | AndroidX Lifecycle | 2.9.6 |
+| kotlinx-serialization | 1.8.1 |
+| kotlinx-coroutines | 1.10.2 |
 | ktlint plugin | 14.0.1 |
 
 Add new libraries to `libs.versions.toml` first, then reference via `libs.<alias>` in `build.gradle.kts`.
