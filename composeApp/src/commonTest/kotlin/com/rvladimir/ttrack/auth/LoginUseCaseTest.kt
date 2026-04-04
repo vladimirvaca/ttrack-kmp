@@ -3,6 +3,8 @@ package com.rvladimir.ttrack.auth
 import com.rvladimir.ttrack.auth.domain.model.AuthResult
 import com.rvladimir.ttrack.auth.domain.model.UserSession
 import com.rvladimir.ttrack.auth.domain.repository.AuthRepository
+import com.rvladimir.ttrack.auth.domain.usecase.GetSessionUseCase
+import com.rvladimir.ttrack.auth.domain.usecase.GetUserProfileUseCase
 import com.rvladimir.ttrack.auth.domain.usecase.LoginUseCase
 import com.rvladimir.ttrack.auth.domain.usecase.RefreshTokenUseCase
 import kotlinx.coroutines.test.runTest
@@ -10,6 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class LoginUseCaseTest {
@@ -231,4 +234,123 @@ class LoginUseCaseTest {
             assertTrue(result.isFailure)
             assertEquals("Invalid refresh token", result.exceptionOrNull()?.message)
         }
+
+    // ── GetUserProfileUseCase ─────────────────────────────────────────────────
+
+    /**
+     * A repository whose session fields are all pre-populated, simulating a user
+     * who previously logged in and whose session was persisted.
+     */
+    private val fullSessionRepository =
+        object : AuthRepository {
+            override suspend fun login(
+                email: String,
+                password: String,
+            ): Result<UserSession> = Result.failure(NotImplementedError())
+
+            override suspend fun refreshToken(refreshToken: String): Result<AuthResult> =
+                Result.failure(NotImplementedError())
+
+            override fun saveSession(session: UserSession) = Unit
+
+            override fun saveTokens(
+                accessToken: String,
+                refreshToken: String,
+            ) = Unit
+
+            override fun getAccessToken(): String = "access_tok"
+
+            override fun getRefreshToken(): String = "refresh_tok"
+
+            override fun getUserId(): Long = 42L
+
+            override fun getUserName(): String = "John"
+
+            override fun getUserLastName(): String = "Doe"
+
+            override fun getUserEmail(): String = "john@example.com"
+
+            override fun clearTokens() = Unit
+        }
+
+    @Test
+    fun `GetUserProfileUseCase returns full session when all fields are stored`() {
+        val useCase = GetUserProfileUseCase(fullSessionRepository)
+        val session = useCase()
+        assertNotNull(session)
+        assertEquals("access_tok", session.accessToken)
+        assertEquals("refresh_tok", session.refreshToken)
+        assertEquals(42L, session.userId)
+        assertEquals("John", session.name)
+        assertEquals("Doe", session.lastName)
+        assertEquals("john@example.com", session.email)
+    }
+
+    @Test
+    fun `GetUserProfileUseCase returns null when access token is missing`() {
+        val repo =
+            object : AuthRepository by fullSessionRepository {
+                override fun getAccessToken(): String? = null
+            }
+        assertNull(GetUserProfileUseCase(repo)())
+    }
+
+    @Test
+    fun `GetUserProfileUseCase returns null when refresh token is missing`() {
+        val repo =
+            object : AuthRepository by fullSessionRepository {
+                override fun getRefreshToken(): String? = null
+            }
+        assertNull(GetUserProfileUseCase(repo)())
+    }
+
+    @Test
+    fun `GetUserProfileUseCase returns null when user id is missing`() {
+        val repo =
+            object : AuthRepository by fullSessionRepository {
+                override fun getUserId(): Long? = null
+            }
+        assertNull(GetUserProfileUseCase(repo)())
+    }
+
+    @Test
+    fun `GetUserProfileUseCase returns null when name is missing`() {
+        val repo =
+            object : AuthRepository by fullSessionRepository {
+                override fun getUserName(): String? = null
+            }
+        assertNull(GetUserProfileUseCase(repo)())
+    }
+
+    @Test
+    fun `GetUserProfileUseCase returns null when last name is missing`() {
+        val repo =
+            object : AuthRepository by fullSessionRepository {
+                override fun getUserLastName(): String? = null
+            }
+        assertNull(GetUserProfileUseCase(repo)())
+    }
+
+    @Test
+    fun `GetUserProfileUseCase returns null when email is missing`() {
+        val repo =
+            object : AuthRepository by fullSessionRepository {
+                override fun getUserEmail(): String? = null
+            }
+        assertNull(GetUserProfileUseCase(repo)())
+    }
+
+    // ── GetSessionUseCase ─────────────────────────────────────────────────────
+
+    @Test
+    fun `GetSessionUseCase returns access token when session exists`() {
+        val useCase = GetSessionUseCase(fullSessionRepository)
+        assertEquals("access_tok", useCase())
+    }
+
+    @Test
+    fun `GetSessionUseCase returns null when no session is stored`() {
+        val useCase = GetSessionUseCase(noSessionRepository)
+        assertNull(useCase())
+    }
 }

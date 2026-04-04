@@ -97,7 +97,7 @@ Each feature has an `object <Feature>ViewModelFactory` that wires dependencies w
 - Endpoint paths: defined in `<Feature>Endpoints` objects, not inline strings.
 - Unauthenticated client: `createKtorClient()` — for login/register/public endpoints.
 - Authenticated client: `LoginViewModelFactory.authenticatedClient` — auto-attaches Bearer token, silently refreshes on 401.
-- Always consult the OpenAPI spec before adding/modifying endpoints: `http://44.199.248.244:8080/swagger/ttrack-be-0.3.1.yml`
+- Always consult the OpenAPI spec before adding/modifying endpoints: `http://44.199.248.244:8080/swagger/ttrack-be-0.3.7.yml`
 - **API service interfaces:** When a feature's API service needs to be faked in tests, extract an interface (e.g. `UserApiServiceInterface` in `registration/data/remote/`). The concrete class implements it; tests create anonymous object implementations. `AuthApiService` predates this pattern and has no interface.
 
 ### expect/actual Implementations

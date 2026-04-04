@@ -9,6 +9,7 @@ plugins {
 }
 
 kotlin {
+    @Suppress("DEPRECATION")
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
@@ -53,6 +54,7 @@ kotlin {
             implementation(libs.ktor.client.logging)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.navigation.compose)
         }
         iosMain.dependencies {
@@ -66,23 +68,15 @@ kotlin {
     }
 }
 
+@Suppress("DEPRECATION")
 android {
     namespace = "com.rvladimir.ttrack"
-    compileSdk =
-        libs.versions.android.compileSdk
-            .get()
-            .toInt()
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.rvladimir.ttrack"
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
-        targetSdk =
-            libs.versions.android.targetSdk
-                .get()
-                .toInt()
+        minSdk = 25
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
     }

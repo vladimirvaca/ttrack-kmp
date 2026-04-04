@@ -41,6 +41,8 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rvladimir.ttrack.ui.theme.AvatarPeach
 import com.rvladimir.ttrack.ui.theme.BarChartGreen
 import com.rvladimir.ttrack.ui.theme.BrandGreen
@@ -68,7 +71,11 @@ import com.rvladimir.ttrack.ui.theme.TextGreen
  */
 @Composable
 @Preview
-fun DashboardScreen(onNavigateToTimer: () -> Unit = {}) {
+fun DashboardScreen(
+    viewModel: DashboardViewModel = viewModel { DashboardViewModelFactory.create() },
+    onNavigateToTimer: () -> Unit = {},
+) {
+    val uiState by viewModel.uiState.collectAsState()
     Scaffold(
         bottomBar = { DashboardBottomNavigation() },
         containerColor = OffWhite,
@@ -84,7 +91,11 @@ fun DashboardScreen(onNavigateToTimer: () -> Unit = {}) {
             Spacer(modifier = Modifier.height(24.dp))
 
             // Header Section
-            HeaderSection()
+            HeaderSection(
+                userName = uiState.userName,
+                greeting = uiState.greeting,
+                formattedDate = uiState.formattedDate,
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -118,7 +129,11 @@ fun DashboardScreen(onNavigateToTimer: () -> Unit = {}) {
 }
 
 @Composable
-private fun HeaderSection() {
+private fun HeaderSection(
+    userName: String,
+    greeting: String,
+    formattedDate: String,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -126,13 +141,13 @@ private fun HeaderSection() {
     ) {
         Column {
             Text(
-                text = "Monday, 24 Oct",
+                text = formattedDate,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = TextGreen,
             )
             Text(
-                text = "Good morning, Alex",
+                text = if (userName.isNotBlank()) "$greeting, $userName" else greeting,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = DarkBackground,
