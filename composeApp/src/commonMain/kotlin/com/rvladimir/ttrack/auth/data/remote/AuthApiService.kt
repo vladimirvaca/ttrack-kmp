@@ -1,6 +1,7 @@
 package com.rvladimir.ttrack.auth.data.remote
 
 import com.rvladimir.ttrack.auth.data.remote.dto.LoginRequestDto
+import com.rvladimir.ttrack.auth.data.remote.dto.MobileLoginResponseDto
 import com.rvladimir.ttrack.auth.data.remote.dto.RefreshTokenRequestDto
 import com.rvladimir.ttrack.auth.data.remote.dto.TokenResponseDto
 import io.ktor.client.HttpClient
@@ -26,19 +27,19 @@ class AuthApiService(
      *
      * @param email The user's email address.
      * @param password The user's password.
-     * @return [TokenResponseDto] containing both access and refresh tokens.
+     * @return [MobileLoginResponseDto] containing tokens and basic user profile information.
      * @throws io.ktor.client.plugins.ClientRequestException on 4xx errors.
      * @throws io.ktor.client.plugins.ServerResponseException on 5xx errors.
      */
     suspend fun login(
         email: String,
         password: String,
-    ): TokenResponseDto =
+    ): MobileLoginResponseDto =
         httpClient
             .post(AuthEndpoints.MOBILE_LOGIN) {
                 contentType(ContentType.Application.Json)
                 setBody(LoginRequestDto(email = email, password = password))
-            }.body()
+            }.body<MobileLoginResponseDto>()
 
     /**
      * Calls the token refresh endpoint ([AuthEndpoints.MOBILE_REFRESH]).

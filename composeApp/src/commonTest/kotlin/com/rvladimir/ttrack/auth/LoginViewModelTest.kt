@@ -1,6 +1,7 @@
 package com.rvladimir.ttrack.auth
 
 import com.rvladimir.ttrack.auth.domain.model.AuthResult
+import com.rvladimir.ttrack.auth.domain.model.UserSession
 import com.rvladimir.ttrack.auth.domain.repository.AuthRepository
 import com.rvladimir.ttrack.auth.domain.usecase.LoginUseCase
 import com.rvladimir.ttrack.auth.domain.usecase.LogoutUseCase
@@ -43,42 +44,59 @@ class LoginViewModelTest {
 
     // ── Fake repositories ─────────────────────────────────────────────────────
 
-    /**
-     * A fake [AuthRepository] that immediately succeeds the login call and
-     * records the last tokens saved via [saveTokens].
-     */
     private class SuccessAuthRepository(
         private val accessToken: String = "access_tok_123",
         private val refreshToken: String = "refresh_tok_456",
+        private val userId: Long = 42L,
+        private val name: String = "John",
+        private val lastName: String = "Doe",
+        private val email: String = "john.doe@example.com",
     ) : AuthRepository {
-        var savedAccessToken: String? = null
-        var savedRefreshToken: String? = null
+        var savedSession: UserSession? = null
         var tokensCleared: Boolean = false
 
         override suspend fun login(
             email: String,
             password: String,
-        ): Result<AuthResult> = Result.success(AuthResult(accessToken = accessToken, refreshToken = refreshToken))
+        ): Result<UserSession> =
+            Result.success(
+                UserSession(
+                    accessToken = accessToken,
+                    refreshToken = refreshToken,
+                    userId = userId,
+                    name = name,
+                    lastName = lastName,
+                    email = this.email, // `this.email` disambiguates from the parameter
+                ),
+            )
 
         override suspend fun refreshToken(refreshToken: String): Result<AuthResult> =
             Result.success(AuthResult(accessToken = "new_access", refreshToken = "new_refresh"))
 
+        override fun saveSession(session: UserSession) {
+            savedSession = session
+        }
+
         override fun saveTokens(
             accessToken: String,
             refreshToken: String,
-        ) {
-            savedAccessToken = accessToken
-            savedRefreshToken = refreshToken
-        }
+        ) = Unit
 
-        override fun getAccessToken(): String? = savedAccessToken
+        override fun getAccessToken(): String? = savedSession?.accessToken
 
-        override fun getRefreshToken(): String? = savedRefreshToken
+        override fun getRefreshToken(): String? = savedSession?.refreshToken
+
+        override fun getUserId(): Long? = savedSession?.userId
+
+        override fun getUserName(): String? = savedSession?.name
+
+        override fun getUserLastName(): String? = savedSession?.lastName
+
+        override fun getUserEmail(): String? = savedSession?.email
 
         override fun clearTokens() {
             tokensCleared = true
-            savedAccessToken = null
-            savedRefreshToken = null
+            savedSession = null
         }
     }
 
@@ -87,10 +105,12 @@ class LoginViewModelTest {
             override suspend fun login(
                 email: String,
                 password: String,
-            ): Result<AuthResult> = Result.failure(RuntimeException("Invalid credentials"))
+            ): Result<UserSession> = Result.failure(RuntimeException("Invalid credentials"))
 
             override suspend fun refreshToken(refreshToken: String): Result<AuthResult> =
                 Result.failure(RuntimeException("Not expected"))
+
+            override fun saveSession(session: UserSession) = Unit
 
             override fun saveTokens(
                 accessToken: String,
@@ -100,6 +120,14 @@ class LoginViewModelTest {
             override fun getAccessToken(): String? = null
 
             override fun getRefreshToken(): String? = null
+
+            override fun getUserId(): Long? = null
+
+            override fun getUserName(): String? = null
+
+            override fun getUserLastName(): String? = null
+
+            override fun getUserEmail(): String? = null
 
             override fun clearTokens() = Unit
         }
@@ -131,13 +159,24 @@ class LoginViewModelTest {
                     override suspend fun login(
                         email: String,
                         password: String,
-                    ): Result<AuthResult> {
+                    ): Result<UserSession> {
                         latch.await()
-                        return Result.success(AuthResult("access", "refresh"))
+                        return Result.success(
+                            UserSession(
+                                accessToken = "access",
+                                refreshToken = "refresh",
+                                userId = 1L,
+                                name = "Test",
+                                lastName = "User",
+                                email = "test@example.com",
+                            ),
+                        )
                     }
 
                     override suspend fun refreshToken(refreshToken: String): Result<AuthResult> =
                         Result.failure(RuntimeException("Not expected"))
+
+                    override fun saveSession(session: UserSession) = Unit
 
                     override fun saveTokens(
                         accessToken: String,
@@ -148,11 +187,18 @@ class LoginViewModelTest {
 
                     override fun getRefreshToken(): String? = null
 
+                    override fun getUserId(): Long? = null
+
+                    override fun getUserName(): String? = null
+
+                    override fun getUserLastName(): String? = null
+
+                    override fun getUserEmail(): String? = null
+
                     override fun clearTokens() = Unit
                 }
             val vm = viewModelWith(hangingRepository)
             vm.loginValid()
-            // Advance past the `_uiState.value = Loading` assignment
             advanceUntilIdle()
             assertIs<LoginUiState.Loading>(vm.uiState.value)
             latch.complete(Unit)
@@ -171,14 +217,18 @@ class LoginViewModelTest {
         }
 
     @Test
-    fun `tokens are persisted on successful login`() =
+    fun `full session is persisted on successful login`() =
         runTest {
             val repo = SuccessAuthRepository(accessToken = "my_access", refreshToken = "my_refresh")
             val vm = viewModelWith(repo)
             vm.loginValid()
             advanceUntilIdle()
-            assertEquals("my_access", repo.savedAccessToken)
-            assertEquals("my_refresh", repo.savedRefreshToken)
+            assertEquals("my_access", repo.savedSession?.accessToken)
+            assertEquals("my_refresh", repo.savedSession?.refreshToken)
+            assertEquals(42L, repo.savedSession?.userId)
+            assertEquals("John", repo.savedSession?.name)
+            assertEquals("Doe", repo.savedSession?.lastName)
+            assertEquals("john.doe@example.com", repo.savedSession?.email)
         }
 
     // ── Error ─────────────────────────────────────────────────────────────────
@@ -228,7 +278,7 @@ class LoginViewModelTest {
                     override suspend fun login(
                         email: String,
                         password: String,
-                    ): Result<AuthResult> = Result.failure(RuntimeException()) // null message
+                    ): Result<UserSession> = Result.failure(RuntimeException()) // null message
                 }
             val vm = viewModelWith(repoWithNullMessage)
             vm.loginValid()
@@ -247,9 +297,7 @@ class LoginViewModelTest {
             vm.loginValid()
             advanceUntilIdle()
             assertIs<LoginUiState.Success>(vm.uiState.value)
-
             vm.logout()
-
             assertIs<LoginUiState.Idle>(vm.uiState.value)
             assertEquals(true, repo.tokensCleared)
         }
@@ -273,9 +321,7 @@ class LoginViewModelTest {
             vm.loginValid()
             advanceUntilIdle()
             assertIs<LoginUiState.Error>(vm.uiState.value)
-
             vm.resetState()
-
             assertIs<LoginUiState.Idle>(vm.uiState.value)
         }
 
@@ -286,9 +332,7 @@ class LoginViewModelTest {
             vm.loginValid()
             advanceUntilIdle()
             assertIs<LoginUiState.Success>(vm.uiState.value)
-
             vm.resetState()
-
             assertIs<LoginUiState.Idle>(vm.uiState.value)
         }
 

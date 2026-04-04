@@ -2,6 +2,7 @@ package com.rvladimir.ttrack.auth.data.repository
 
 import com.rvladimir.ttrack.auth.data.remote.AuthApiService
 import com.rvladimir.ttrack.auth.domain.model.AuthResult
+import com.rvladimir.ttrack.auth.domain.model.UserSession
 import com.rvladimir.ttrack.auth.domain.repository.AuthRepository
 import com.rvladimir.ttrack.core.session.SessionStorage
 import io.ktor.client.plugins.ClientRequestException
@@ -9,10 +10,10 @@ import io.ktor.http.HttpStatusCode
 
 /**
  * Concrete implementation of [AuthRepository] that delegates to [AuthApiService]
- * for network calls and [SessionStorage] for token persistence.
+ * for network calls and [SessionStorage] for session persistence.
  *
  * @property apiService The remote API service.
- * @property sessionStorage Platform-specific storage for session tokens.
+ * @property sessionStorage Platform-specific storage for session data.
  */
 class AuthRepositoryImpl(
     private val apiService: AuthApiService,
@@ -21,14 +22,18 @@ class AuthRepositoryImpl(
     override suspend fun login(
         email: String,
         password: String,
-    ): Result<AuthResult> =
+    ): Result<UserSession> =
         try {
             val dto = apiService.login(email, password)
             Result.success(
-                AuthResult(
+                UserSession(
                     accessToken = dto.accessToken,
                     refreshToken = dto.refreshToken,
                     tokenType = dto.tokenType,
+                    userId = dto.userId,
+                    name = dto.name,
+                    lastName = dto.lastname,
+                    email = dto.email,
                 ),
             )
         } catch (e: ClientRequestException) {
@@ -51,6 +56,16 @@ class AuthRepositoryImpl(
             )
         }
 
+    override fun saveSession(session: UserSession) {
+        sessionStorage.saveTokens(session.accessToken, session.refreshToken)
+        sessionStorage.saveUserProfile(
+            userId = session.userId,
+            name = session.name,
+            lastName = session.lastName,
+            email = session.email,
+        )
+    }
+
     override fun saveTokens(
         accessToken: String,
         refreshToken: String,
@@ -59,6 +74,14 @@ class AuthRepositoryImpl(
     override fun getAccessToken(): String? = sessionStorage.getAccessToken()
 
     override fun getRefreshToken(): String? = sessionStorage.getRefreshToken()
+
+    override fun getUserId(): Long? = sessionStorage.getUserId()
+
+    override fun getUserName(): String? = sessionStorage.getUserName()
+
+    override fun getUserLastName(): String? = sessionStorage.getUserLastName()
+
+    override fun getUserEmail(): String? = sessionStorage.getUserEmail()
 
     override fun clearTokens() = sessionStorage.clearTokens()
 }

@@ -3,6 +3,7 @@ package com.rvladimir.ttrack.auth.presentation
 import com.rvladimir.ttrack.auth.data.remote.AuthApiService
 import com.rvladimir.ttrack.auth.data.repository.AuthRepositoryImpl
 import com.rvladimir.ttrack.auth.domain.usecase.GetSessionUseCase
+import com.rvladimir.ttrack.auth.domain.usecase.GetUserProfileUseCase
 import com.rvladimir.ttrack.auth.domain.usecase.LoginUseCase
 import com.rvladimir.ttrack.auth.domain.usecase.LogoutUseCase
 import com.rvladimir.ttrack.auth.domain.usecase.RefreshTokenUseCase
@@ -84,6 +85,17 @@ object LoginViewModelFactory {
     /** Returns a [GetSessionUseCase] backed by the shared repository instance. */
     fun createGetSessionUseCase(): GetSessionUseCase = GetSessionUseCase(repository)
 
-    /** Returns a [RefreshTokenUseCase] backed by the shared repository instance. */
+    /**
+     * Returns a [GetUserProfileUseCase] backed by the shared repository instance.
+     * Intended for use by profile/dashboard screens that need the stored user data.
+     */
+    @Suppress("unused")
+    fun createGetUserProfileUseCase(): GetUserProfileUseCase = GetUserProfileUseCase(repository)
+
+    /**
+     * Returns a [RefreshTokenUseCase] backed by the shared repository instance.
+     * Intended for use by screens that need to trigger a manual token refresh.
+     */
+    @Suppress("unused")
     fun createRefreshTokenUseCase(): RefreshTokenUseCase = RefreshTokenUseCase(repository)
 }

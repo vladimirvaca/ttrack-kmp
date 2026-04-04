@@ -1,7 +1,9 @@
 package com.rvladimir.ttrack.auth
 
+import com.rvladimir.ttrack.auth.data.remote.dto.MobileLoginResponseDto
 import com.rvladimir.ttrack.auth.data.remote.dto.TokenResponseDto
 import com.rvladimir.ttrack.auth.domain.model.AuthResult
+import com.rvladimir.ttrack.auth.domain.model.UserSession
 import com.rvladimir.ttrack.auth.domain.repository.AuthRepository
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -19,13 +21,17 @@ import kotlin.test.assertTrue
  * is needed.
  */
 class AuthRepositoryImplTest {
-    // ── Fake token DTOs ───────────────────────────────────────────────────────
+    // ── Fake DTOs ─────────────────────────────────────────────────────────────
 
-    private val defaultTokenDto =
-        TokenResponseDto(
+    private val defaultLoginDto =
+        MobileLoginResponseDto(
             accessToken = "access_tok",
             refreshToken = "refresh_tok",
             tokenType = "Bearer",
+            userId = 42L,
+            name = "John",
+            lastname = "Doe",
+            email = "john.doe@example.com",
         )
 
     private val refreshedTokenDto =
@@ -40,6 +46,10 @@ class AuthRepositoryImplTest {
     private class InMemorySessionStorage {
         private var accessToken: String? = null
         private var refreshToken: String? = null
+        private var userId: Long? = null
+        private var name: String? = null
+        private var lastName: String? = null
+        private var email: String? = null
 
         fun saveTokens(
             accessToken: String,
@@ -49,36 +59,65 @@ class AuthRepositoryImplTest {
             this.refreshToken = refreshToken
         }
 
+        fun saveUserProfile(
+            userId: Long,
+            name: String,
+            lastName: String,
+            email: String,
+        ) {
+            this.userId = userId
+            this.name = name
+            this.lastName = lastName
+            this.email = email
+        }
+
         fun getAccessToken(): String? = accessToken
 
         fun getRefreshToken(): String? = refreshToken
 
+        fun getUserId(): Long? = userId
+
+        fun getUserName(): String? = name
+
+        fun getUserLastName(): String? = lastName
+
+        fun getUserEmail(): String? = email
+
         fun clearTokens() {
             accessToken = null
             refreshToken = null
+            userId = null
+            name = null
+            lastName = null
+            email = null
         }
     }
 
     // ── Repository factory ────────────────────────────────────────────────────
 
-    /**
-     * Builds an [AuthRepository] that mirrors [com.rvladimir.ttrack.auth.data.repository.AuthRepositoryImpl]
-     * behaviour, delegating token persistence to [storage] and API calls to the
-     * provided lambdas.
-     */
     private fun buildRepo(
         storage: InMemorySessionStorage = InMemorySessionStorage(),
-        loginFn: suspend (String, String) -> TokenResponseDto,
+        loginFn: suspend (String, String) -> MobileLoginResponseDto,
         refreshFn: suspend (String) -> TokenResponseDto = { throw NotImplementedError() },
     ): AuthRepository =
         object : AuthRepository {
             override suspend fun login(
                 email: String,
                 password: String,
-            ): Result<AuthResult> =
+            ): Result<UserSession> =
                 try {
                     val dto = loginFn(email, password)
-                    Result.success(AuthResult(dto.accessToken, dto.refreshToken, dto.tokenType))
+                    Result.success(
+                        UserSession(
+                            accessToken = dto.accessToken,
+                            refreshToken = dto.refreshToken,
+                            tokenType = dto.tokenType,
+                            userId = dto.userId,
+                            name = dto.name,
+                            lastName = dto.lastname,
+                            email = dto.email,
+                        ),
+                    )
                 } catch (e: Exception) {
                     Result.failure(e)
                 }
@@ -89,6 +128,11 @@ class AuthRepositoryImplTest {
                     AuthResult(dto.accessToken, dto.refreshToken, dto.tokenType)
                 }
 
+            override fun saveSession(session: UserSession) {
+                storage.saveTokens(session.accessToken, session.refreshToken)
+                storage.saveUserProfile(session.userId, session.name, session.lastName, session.email)
+            }
+
             override fun saveTokens(
                 accessToken: String,
                 refreshToken: String,
@@ -98,6 +142,14 @@ class AuthRepositoryImplTest {
 
             override fun getRefreshToken(): String? = storage.getRefreshToken()
 
+            override fun getUserId(): Long? = storage.getUserId()
+
+            override fun getUserName(): String? = storage.getUserName()
+
+            override fun getUserLastName(): String? = storage.getUserLastName()
+
+            override fun getUserEmail(): String? = storage.getUserEmail()
+
             override fun clearTokens() = storage.clearTokens()
         }
 
@@ -106,12 +158,24 @@ class AuthRepositoryImplTest {
     @Test
     fun `login returns success with correct token pair`() =
         runTest {
-            val repo = buildRepo(loginFn = { _, _ -> defaultTokenDto })
+            val repo = buildRepo(loginFn = { _, _ -> defaultLoginDto })
             val result = repo.login("user@example.com", "password123")
             assertTrue(result.isSuccess)
             assertEquals("access_tok", result.getOrNull()?.accessToken)
             assertEquals("refresh_tok", result.getOrNull()?.refreshToken)
             assertEquals("Bearer", result.getOrNull()?.tokenType)
+        }
+
+    @Test
+    fun `login returns success with correct user profile`() =
+        runTest {
+            val repo = buildRepo(loginFn = { _, _ -> defaultLoginDto })
+            val result = repo.login("user@example.com", "password123")
+            assertTrue(result.isSuccess)
+            assertEquals(42L, result.getOrNull()?.userId)
+            assertEquals("John", result.getOrNull()?.name)
+            assertEquals("Doe", result.getOrNull()?.lastName)
+            assertEquals("john.doe@example.com", result.getOrNull()?.email)
         }
 
     @Test
@@ -133,7 +197,7 @@ class AuthRepositoryImplTest {
                     loginFn = { email, password ->
                         capturedEmail = email
                         capturedPassword = password
-                        defaultTokenDto
+                        defaultLoginDto
                     },
                 )
             repo.login("user@example.com", "secret")
@@ -146,7 +210,7 @@ class AuthRepositoryImplTest {
     @Test
     fun `refreshToken returns new token pair on success`() =
         runTest {
-            val repo = buildRepo(loginFn = { _, _ -> defaultTokenDto }, refreshFn = { refreshedTokenDto })
+            val repo = buildRepo(loginFn = { _, _ -> defaultLoginDto }, refreshFn = { refreshedTokenDto })
             val result = repo.refreshToken("old_refresh_tok")
             assertTrue(result.isSuccess)
             assertEquals("new_access", result.getOrNull()?.accessToken)
@@ -158,7 +222,7 @@ class AuthRepositoryImplTest {
         runTest {
             val repo =
                 buildRepo(
-                    loginFn = { _, _ -> defaultTokenDto },
+                    loginFn = { _, _ -> defaultLoginDto },
                     refreshFn = { throw RuntimeException("Token expired") },
                 )
             val result = repo.refreshToken("bad_token")
@@ -166,26 +230,57 @@ class AuthRepositoryImplTest {
             assertEquals("Token expired", result.exceptionOrNull()?.message)
         }
 
-    // ── saveTokens / getAccessToken / getRefreshToken ─────────────────────────
+    // ── saveSession() ─────────────────────────────────────────────────────────
 
     @Test
-    fun `getAccessToken returns null when no tokens have been saved`() =
+    fun `saveSession persists tokens and user profile`() =
         runTest {
-            val repo = buildRepo(loginFn = { _, _ -> defaultTokenDto })
+            val repo = buildRepo(loginFn = { _, _ -> defaultLoginDto })
+            val session =
+                UserSession(
+                    accessToken = "stored_access",
+                    refreshToken = "stored_refresh",
+                    userId = 7L,
+                    name = "Jane",
+                    lastName = "Smith",
+                    email = "jane.smith@example.com",
+                )
+            repo.saveSession(session)
+            assertEquals("stored_access", repo.getAccessToken())
+            assertEquals("stored_refresh", repo.getRefreshToken())
+            assertEquals(7L, repo.getUserId())
+            assertEquals("Jane", repo.getUserName())
+            assertEquals("Smith", repo.getUserLastName())
+            assertEquals("jane.smith@example.com", repo.getUserEmail())
+        }
+
+    // ── saveTokens / getters ─────────────────────────────────────────────────
+
+    @Test
+    fun `getAccessToken returns null when no session has been saved`() =
+        runTest {
+            val repo = buildRepo(loginFn = { _, _ -> defaultLoginDto })
             assertNull(repo.getAccessToken())
         }
 
     @Test
-    fun `getRefreshToken returns null when no tokens have been saved`() =
+    fun `getRefreshToken returns null when no session has been saved`() =
         runTest {
-            val repo = buildRepo(loginFn = { _, _ -> defaultTokenDto })
+            val repo = buildRepo(loginFn = { _, _ -> defaultLoginDto })
             assertNull(repo.getRefreshToken())
+        }
+
+    @Test
+    fun `getUserId returns null when no session has been saved`() =
+        runTest {
+            val repo = buildRepo(loginFn = { _, _ -> defaultLoginDto })
+            assertNull(repo.getUserId())
         }
 
     @Test
     fun `saveTokens persists both access and refresh tokens`() =
         runTest {
-            val repo = buildRepo(loginFn = { _, _ -> defaultTokenDto })
+            val repo = buildRepo(loginFn = { _, _ -> defaultLoginDto })
             repo.saveTokens("stored_access", "stored_refresh")
             assertEquals("stored_access", repo.getAccessToken())
             assertEquals("stored_refresh", repo.getRefreshToken())
@@ -194,7 +289,7 @@ class AuthRepositoryImplTest {
     @Test
     fun `saveTokens overwrites previously stored tokens`() =
         runTest {
-            val repo = buildRepo(loginFn = { _, _ -> defaultTokenDto })
+            val repo = buildRepo(loginFn = { _, _ -> defaultLoginDto })
             repo.saveTokens("first_access", "first_refresh")
             repo.saveTokens("second_access", "second_refresh")
             assertEquals("second_access", repo.getAccessToken())
@@ -204,19 +299,32 @@ class AuthRepositoryImplTest {
     // ── clearTokens() ─────────────────────────────────────────────────────────
 
     @Test
-    fun `clearTokens removes both stored tokens`() =
+    fun `clearTokens removes tokens and user profile`() =
         runTest {
-            val repo = buildRepo(loginFn = { _, _ -> defaultTokenDto })
-            repo.saveTokens("access", "refresh")
+            val repo = buildRepo(loginFn = { _, _ -> defaultLoginDto })
+            repo.saveSession(
+                UserSession(
+                    accessToken = "access",
+                    refreshToken = "refresh",
+                    userId = 1L,
+                    name = "Test",
+                    lastName = "User",
+                    email = "test@example.com",
+                ),
+            )
             repo.clearTokens()
             assertNull(repo.getAccessToken())
             assertNull(repo.getRefreshToken())
+            assertNull(repo.getUserId())
+            assertNull(repo.getUserName())
+            assertNull(repo.getUserLastName())
+            assertNull(repo.getUserEmail())
         }
 
     @Test
     fun `clearTokens on empty storage does not throw`() =
         runTest {
-            val repo = buildRepo(loginFn = { _, _ -> defaultTokenDto })
+            val repo = buildRepo(loginFn = { _, _ -> defaultLoginDto })
             repo.clearTokens()
             assertNull(repo.getAccessToken())
         }

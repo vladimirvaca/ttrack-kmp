@@ -26,3 +26,20 @@ data class TokenResponseDto(
 data class RefreshTokenRequestDto(
     @SerialName("refreshToken") val refreshToken: String,
 )
+
+/**
+ * Response body received from the mobile-login endpoint.
+ * Matches `MobileLoginResponseDTO` in the API spec.
+ *
+ * Contains JWT tokens and basic user profile information returned on successful login.
+ */
+@Serializable
+data class MobileLoginResponseDto(
+    @SerialName("accessToken") val accessToken: String,
+    @SerialName("tokenType") val tokenType: String? = null,
+    @SerialName("refreshToken") val refreshToken: String,
+    @SerialName("userId") val userId: Long,
+    @SerialName("email") val email: String,
+    @SerialName("name") val name: String,
+    @SerialName("lastname") val lastname: String,
+)
